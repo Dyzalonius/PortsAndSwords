@@ -8,21 +8,27 @@
 <body>
     <div id="app">
         <!-- TODO: move html to a separate html and load using jquery -->
-        <canvas id="ctx" width="800" height="800" style="border:1px solid #000000;"></canvas>
+        <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
         <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 
         <!-- TODO: move code to separate js file js/handleClient.js -->
         <script>
             // define images
             var Img = {};
-            Img.anchor = new Image();
-            Img.anchor.src = '/client/img/anchor.png';
-            Img.ram = new Image();
-            Img.ram.src = '/client/img/ram.png';
+            Img.anchorBlue = new Image();
+            Img.anchorBlue.src = '/client/img/anchor_blue.png';
+            Img.anchorRed = new Image();
+            Img.anchorRed.src = '/client/img/anchor_red.png';
+            Img.ramBlue = new Image();
+            Img.ramBlue.src = '/client/img/ram_blue.png';
+            Img.ramRed = new Image();
+            Img.ramRed.src = '/client/img/ram_red.png';
 
             // define context
             var ctx = document.getElementById("ctx").getContext("2d");
             ctx.font = '30px Arial';
+            var BOARD_OFFSET_X = 8;
+            var BOARD_OFFSET_Y = 8;
 
             // connect to the server
             var client = io();
@@ -30,65 +36,73 @@
             // listen for data
             client.on('package', function (data) {
                 // clear screen
-                ctx.clearRect(0, 0, 800, 800);
+                ctx.clearRect(0, 0, 500, 500);
 
                 // draw grid
-                for (var i = 0; i < 16; i++) {
-                    for (var j = 0; j < 16; j++) {
+                for (var i = 0; i < 10; i++) {
+                    for (var j = 0; j < 10; j++) {
                         ctx.strokeRect(i * 50, j * 50, (i + 1) * 50, (j + 1) * 50);
                     }
                 }
 
                 // draw anchors
-                [[650, 0], [700, 0], [750, 0], [750, 50], [750, 100], [0, 650], [0, 700], [0, 750], [50, 750], [100, 750]].forEach(element => {
+                [[0, 8, 0], [0, 9, 0], [1, 9, 0], [8, 0, 1], [9, 0, 1], [9, 1, 1]].forEach(element => {
                     var width = 50;
                     var height = 50;
 
-                    ctx.drawImage(Img.anchor, 0, 0, Img.anchor.width, Img.anchor.height, element[0], element[1], width, height);
+                    var img = Img.anchorBlue;
+                    if (element[2] == 1) {
+                        img = Img.anchorRed;
+                    }
+
+                    ctx.drawImage(img, 0, 0, img.width, img.height, element[0]*50, element[1]*50, width, height);
                 });
 
-                // draw players
-                ctx.fillStyle = "#000000";
-                for (var i = 0; i < data[0].length; i++) {
-                    ctx.fillText(data[0][i].number, data[0][i].posX, data[i][0].posY);
-                };
-
                 // draw ships
-                ctx.fillStyle = "#666666";
-                for (var i = 0; i < data[1].length; i++) {
-                    var ship = data[1][i];
-                    ctx.fillRect(ship.posX, ship.posY, ship.width, ship.height);
+                for (var i = 0; i < data.length; i++) {
+                    var ship = data[i];
 
                     var width = 50;
                     var height = 50;
-                    ctx.drawImage(Img.ram, -10, -10, (Img.ram.width + 20), (Img.ram.height + 20), (ship.posX + ship.headingOffsetX), (ship.posY + ship.headingOffsetY), width, height);
+                    var img = Img.ramBlue;
+                    var fill = "#8888FF";
+
+                    if (ship.side) {
+                        img = Img.ramRed;
+                        fill = "#FF8888";
+                    }
+
+                    ctx.fillStyle = fill;
+                    ctx.fillRect(ship.posX, ship.posY, ship.width, ship.height);
+
+                    ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.posX + ship.headingOffsetX), (ship.posY + ship.headingOffsetY), width, height);
                 };
             });
 
             // emit input onkeydown
             document.onkeydown = function (event) {
-                if (event.keyCode === 68) {
-                    client.emit('keyPress', { inputId: 'right', state: true });
-                } else if (event.keyCode === 83) {
-                    client.emit('keyPress', { inputId: 'down', state: true });
-                } else if (event.keyCode === 65) {
-                    client.emit('keyPress', { inputId: 'left', state: true });
-                } else if (event.keyCode === 87) {
-                    client.emit('keyPress', { inputId: 'up', state: true });
-                };
+                if (event.keyCode === 82) {
+                    client.emit('keyPress', { inputId: 'R' });
+                }
+                if (event.keyCode === 79) {
+                    client.emit('keyPress', { inputId: 'O' });
+                }
             };
 
-            // emit input onkeyup
-            document.onkeyup = function (event) {
-                if (event.keyCode === 68) {
-                    client.emit('keyPress', { inputId: 'right', state: false });
-                } else if (event.keyCode === 83) {
-                    client.emit('keyPress', { inputId: 'down', state: false });
-                } else if (event.keyCode === 65) {
-                    client.emit('keyPress', { inputId: 'left', state: false });
-                } else if (event.keyCode === 87) {
-                    client.emit('keyPress', { inputId: 'up', state: false });
-                };
+            // emit input mousedown
+            document.onmousedown = function (event) {
+                client.emit('mouseDown', { posX: event.clientX - BOARD_OFFSET_Y, posY: event.clientY - BOARD_OFFSET_Y });
+
+                // start emit input mousePos
+                document.addEventListener('mousemove', mouseMove = function (event) {
+                    client.emit('mousePos', { posX: event.clientX - BOARD_OFFSET_Y, posY: event.clientY - BOARD_OFFSET_Y });
+                }, false);
+            };
+
+            // stop emit input mousePos
+            document.onmouseup = function (event) {
+                document.removeEventListener('mousemove', mouseMove, false);
+                client.emit('mouseUp', {});
             };
         </script>
     </div>
