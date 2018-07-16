@@ -142,6 +142,8 @@ var Ship = function (posX, posY, direction, side) {
     }
 
     self.updateDirection();
+
+    return self;
 }
 Ship.spawn = function (gridX, gridY, direction, side) {
     var posX = gridX * 50;
@@ -284,6 +286,34 @@ Player.onDisconnect = function (client) {
     delete PLAYER_LIST[client.id];
 }
 
+// GAME
+var Game = function () {
+    var self = {
+        name: "",
+        id: Math.random(),
+        players: []
+    }
+
+    return self;
+}
+Game.fetch = function () {
+    var package = [];
+
+    // add positions of all ships to the package
+    for (var i in GAME_LIST) {
+        var game = GAME_LIST[i];
+
+        // add ship's position to the package
+        package.push({
+            id: game.id,
+            name: game.name,
+            playerCount: game.players.length
+        });
+    }
+
+    return package;
+}
+
 ////////////////////////////////////////
 //           SUB FUNCTIONS            //
 ////////////////////////////////////////
@@ -304,6 +334,7 @@ var GameStart = function () {
 ////////////////////////////////////////
 
 var CLIENT_LIST = {};
+var GAME_LIST = {};
 var PLAYER_LIST = {};
 var SHIP_LIST;
 var nextShipID;
