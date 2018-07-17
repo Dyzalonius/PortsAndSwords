@@ -353,10 +353,10 @@ var Game = function (name) {
     self.onDisconnect = function (client) {
         self.clients = self.clients.filter(element => element.id != client.id);
 
-        if (self.player1.id == client.id) {
+        if (self.player1 != null && self.player1.id == client.id) {
             self.player1 = null;
             console.log("\x1b[37m%s\x1b[0m", "Game '" + self.id + "' left by Client '" + client.id + "' as Player1.");
-        } else if (self.player2.id == client.id) {
+        } else if (self.player2 != null && self.player2.id == client.id) {
             self.player2 = null;
             console.log("\x1b[37m%s\x1b[0m", "Game '" + self.id + "' left by Client '" + client.id + "' as Player2.");
         } else {
