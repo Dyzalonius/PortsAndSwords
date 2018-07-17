@@ -27,12 +27,16 @@ var client = io();
 ////////////////////////////////////////
 
 $(document).ready(function () {
-    $("#buttonCreateGame").click(() => {
+    $("#buttonGameCreate").click(() => {
+        client.emit('gameCreate');
+
         $("#menuWrapper").css("display", "none");
         $("#gameWrapper").css("display", "block");
     });
 
-    $("#buttonLeaveGame").click(() => {
+    $("#buttonGameLeave").click(() => {
+        client.emit('gameLeave');
+
         $("#menuWrapper").css("display", "block");
         $("#gameWrapper").css("display", "none");
     });
@@ -40,11 +44,11 @@ $(document).ready(function () {
 });
 
 ////////////////////////////////////////
-//                DRAW                //
+//            HANDLE GAME             //
 ////////////////////////////////////////
 
 // listen for data
-client.on('package', function (data) {
+client.on('gameData', function (data) {
     // clear screen
     ctx.clearRect(0, 0, 500, 500);
 
@@ -89,19 +93,35 @@ client.on('package', function (data) {
     };
 });
 
-// listen for menu data
-client.on('menu', function (data) {
-    var gameList = data;
-    for (let i = 0; i < gameList.length; i++) {
-        var game = gameList[i];
+////////////////////////////////////////
+//            HANDLE MENU             //
+////////////////////////////////////////
 
+// listen for menu data
+client.on('menuData', function (data) {
+    // Empty gameList
+    $("#gameList").empty();
+
+    // Fill gameList
+    for (let i = 0; i < data.length; i++) {
+        let game = data[i];
+
+        // Create entry for the game
         $("#gameList").append(`
             <div>
                 game.name
+                <button id="buttonGameJoin-${game.id}" class="gameJoin" value=${game.id}>Join game</button>
             </div>`
         );
-    }
 
+        // Bind the join button to the game
+        $("#buttonGameJoin-" + game.id).click(() => {
+            client.emit('gameJoin', { gameID: game.id });
+
+            $("#menuWrapper").css("display", "none");
+            $("#gameWrapper").css("display", "block");
+        });
+    }
 });
 
 ////////////////////////////////////////
@@ -131,5 +151,5 @@ document.onmousedown = function (event) {
 // stop emit input mousePos
 document.onmouseup = function (event) {
     document.removeEventListener('mousemove', mouseMove, false);
-    client.emit('mouseUp', {});
+    client.emit('mouseUp');
 }
