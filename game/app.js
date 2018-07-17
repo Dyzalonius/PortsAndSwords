@@ -32,7 +32,14 @@ io.sockets.on('connection', function (client) {
     // listen for disconnect
     client.on('disconnect', function () {
         delete CLIENT_LIST[client.id];
-        Player.onDisconnect(client);
+
+        // check if player is still in a game
+        var game = Game.findWithPlayer(client);
+
+        // remove player from game if still in one
+        if (game != null) {
+            game.onDisconnect(client);
+        }
 
         console.log("\x1b[33m%s\x1b[0m", "Client '" + client.id + "' disconnected.");
     });
@@ -183,6 +190,23 @@ var Player = function (id) {
     self.onDisconnect = function () {
         self.gameID = null;
     }
+    self.onConnect = function (gameID, client) {
+        self.gameID = gameID;
+
+        game = Game.findWithID(gameID);
+        game.clients.push(client);
+
+        // sitdown as player if still open
+        if (game.player1 == null) {
+            game.player1 = self;
+            console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "' as Player1.");
+        } else if (game.player2 == null) {
+            game.player2 = self;
+            console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "' as Player2.");
+        } else {
+            console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "' as Spectator.");
+        }
+    }
 
     return self;
 }
@@ -198,8 +222,8 @@ Player.onConnect = function (client) {
             }
         }
         if (data.inputId === 'O') {
-            var game = Game.find(player.gameID);
-            
+            var game = Game.findWithID(player.gameID);
+
             if (game != null) {
                 game.restart();
             };
@@ -209,7 +233,7 @@ Player.onConnect = function (client) {
     // listen for input mouseDown
     client.on('mouseDown', function (data) {
         player.lastMousePos = [data.posX, data.posY];
-        var game = Game.find(player.gameID);
+        var game = Game.findWithID(player.gameID);
 
         if (game != null) {
             var ship = game.checkOverlap(player.lastMousePos);
@@ -246,21 +270,12 @@ Player.onConnect = function (client) {
     client.on('gameCreate', function (data) {
         var game = Game.create(data.name);
 
-        player.gameID = game.id;
-        game.clients.push(client);
-
-        console.log("\x1b[7m%s\x1b[0m", "Game '" + game.id + "' started.");
-        console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "'.");
+        player.onConnect(game.id, client);
     });
 
     // listen for gameJoin
     client.on('gameJoin', function (data) {
-        player.gameID = data.gameID;
-
-        game = Game.find(data.gameID);
-        game.clients.push(client);
-
-        console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "'.");
+        player.onConnect(data.gameID, client);
     });
 
     // listen for gameLeave
@@ -269,25 +284,10 @@ Player.onConnect = function (client) {
         player.onDisconnect();
 
         // remove the player from the game's clients
-        Player.onDisconnect(client);
+        Game.findWithPlayer(player).onDisconnect(client);
     });
 
-    Game.emit();
-}
-Player.onDisconnect = function (client) {
-    // find the game the player was in
-    for (var i = GAME_LIST.length - 1; i >= 0; i--) {
-        var game = GAME_LIST[i];
-
-        for (var j = game.clients.length - 1; j >= 0; j--) {
-            var player = game.clients[j];
-
-            if (player.id == client.id) {
-                game.onDisconnect(client);
-                return;
-            }
-        }
-    }
+    Game.emitList();
 }
 
 // GAME
@@ -296,6 +296,8 @@ var Game = function (name) {
         name: name,
         id: nextGameID,
         clients: [],
+        player1: null,
+        player2: null,
         ships: [],
         nextShipID: 0
     }
@@ -315,12 +317,12 @@ var Game = function (name) {
         });
     }
     self.getPackage = function () {
-        var package = [];
+        var package = [[]];
 
         // add positions of all ships to the package
         for (var i in self.ships) {
             var ship = self.ships[i];
-            package.push({
+            package[0].push({
                 posX: ship.posX,
                 posY: ship.posY,
                 width: ship.width,
@@ -331,12 +333,17 @@ var Game = function (name) {
             });
         }
 
+        package.push({
+            player1: self.player1,
+            player2: self.player2
+        });
+
         return package;
     }
     self.checkOverlap = function (pos) {
         for (var i = self.ships.length - 1; i >= 0; i--) {
             var ship = self.ships[i];
-            
+
             if (ship.checkOverlap(pos)) {
                 return ship;
             }
@@ -346,7 +353,15 @@ var Game = function (name) {
     self.onDisconnect = function (client) {
         self.clients = self.clients.filter(element => element.id != client.id);
 
-        console.log("\x1b[37m%s\x1b[0m", "Game '" + self.id + "' left by Client '" + client.id + "'.");
+        if (self.player1.id == client.id) {
+            self.player1 = null;
+            console.log("\x1b[37m%s\x1b[0m", "Game '" + self.id + "' left by Client '" + client.id + "' as Player1.");
+        } else if (self.player2.id == client.id) {
+            self.player2 = null;
+            console.log("\x1b[37m%s\x1b[0m", "Game '" + self.id + "' left by Client '" + client.id + "' as Player2.");
+        } else {
+            console.log("\x1b[37m%s\x1b[0m", "Game '" + self.id + "' left by Client '" + client.id + "' as Spectator.");
+        }
 
         // stop game if no clients are remaining
         if (self.clients.length == 0) {
@@ -355,7 +370,7 @@ var Game = function (name) {
     }
     self.destroy = function () {
         GAME_LIST = GAME_LIST.filter(element => element.id != self.id);
-        Game.emit();
+        Game.emitList();
 
         console.log("\x1b[7m%s\x1b[0m", "Game '" + self.id + "' stopped.");
     }
@@ -363,9 +378,10 @@ var Game = function (name) {
     nextGameID++;
     self.initialize();
     GAME_LIST.push(self);
+    console.log("\x1b[7m%s\x1b[0m", "Game '" + self.id + "' started.");
     return self;
 }
-Game.fetch = function () {
+Game.fetchList = function () {
     var package = [];
 
     // add positions of all ships to the package
@@ -382,8 +398,8 @@ Game.fetch = function () {
 
     return package;
 }
-Game.emit = function () {
-    var menuData = Game.fetch();
+Game.emitList = function () {
+    var menuData = Game.fetchList();
 
     for (var i in CLIENT_LIST) {
         CLIENT_LIST[i].emit('menuData', menuData);
@@ -391,11 +407,11 @@ Game.emit = function () {
 }
 Game.create = function (name) {
     game = Game(name);
-    Game.emit();
+    Game.emitList();
 
     return game;
 }
-Game.find = function (id) {
+Game.findWithID = function (id) {
     for (i in GAME_LIST) {
         var game = GAME_LIST[i];
 
@@ -404,6 +420,21 @@ Game.find = function (id) {
         }
     }
 
+    return null;
+}
+Game.findWithPlayer = function (player) {
+    // find the game the player was in
+    for (var i = GAME_LIST.length - 1; i >= 0; i--) {
+        var game = GAME_LIST[i];
+
+        for (var j = game.clients.length - 1; j >= 0; j--) {
+            var client = game.clients[j];
+
+            if (player.id == client.id) {
+                return game;
+            }
+        }
+    }
     return null;
 }
 

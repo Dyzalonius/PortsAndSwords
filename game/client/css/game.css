@@ -1,10 +1,43 @@
+/* MISCELLANEOUS */
 h1, h2 {
     margin: 20px 0px;
 }
 
+
+
+/* GAME LIST */
 #gameListTitle {
     margin-bottom: 0px;
 }
 .gameListItem {
     margin: 5px 0px;
+}
+
+
+
+/* GAME */
+#gameWrapper {
+    width: 502px;
+    margin: auto;
+    /* margin-left: calc(40%/2);
+    margin-right: calc(40%/2); */
+}
+#textGameName {
+    margin-bottom: 0px;
+    display: inline-block;
+    margin-right: 10px;
+}
+#buttonGameLeave {
+    display: inline-block;
+}
+#textGamePlayer1 {
+    color: red;
+    float: right;
+}
+#textGamePlayer2 {
+    color: blue;
+    float: left;
+}
+#ctx {
+    padding: auto;
 }

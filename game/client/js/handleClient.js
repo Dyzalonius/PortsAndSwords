@@ -16,8 +16,8 @@ Img.ramRed.src = '/client/img/ram_red.png';
 // define context
 var ctx = document.getElementById("ctx").getContext("2d");
 ctx.font = '30px Arial';
-var BOARD_OFFSET_X = 8;
-var BOARD_OFFSET_Y = 124;
+var BOARD_OFFSET_X = 0;
+var BOARD_OFFSET_Y = 0;
 
 // connect to the server
 var client = io();
@@ -31,9 +31,9 @@ $(document).ready(function () {
         if ($("#fieldLoginName").val().length >= 3) {
             client.emit('login', { name: $("#fieldLoginName").val() });
 
-            $("#loginWrapper").css("display", "none");
-            $("#menuWrapper").css("display", "block");
-            $("#gameWrapper").css("display", "none");
+            $("#loginScreen").css("display", "none");
+            $("#menuScreen").css("display", "block");
+            $("#gameScreen").css("display", "none");
             $("#fieldGameCreateName").val($("#fieldLoginName").val() + "'s game");
         } else {
             alert('Name needs to be atleast 3 characters');
@@ -44,9 +44,9 @@ $(document).ready(function () {
         if ($("#fieldGameCreateName").val().length >= 3) {
             client.emit('gameCreate', { name: $("#fieldGameCreateName").val() });
 
-            $("#loginWrapper").css("display", "none");
-            $("#menuWrapper").css("display", "none");
-            $("#gameWrapper").css("display", "block");
+            $("#loginScreen").css("display", "none");
+            $("#menuScreen").css("display", "none");
+            $("#gameScreen").css("display", "block");
             $("#textGameName").html($("#fieldGameCreateName").val());
         } else {
             alert('Name needs to be atleast 3 characters');
@@ -57,9 +57,9 @@ $(document).ready(function () {
         client.emit('gameLeave');
 
 
-        $("#loginWrapper").css("display", "none");
-        $("#menuWrapper").css("display", "block");
-        $("#gameWrapper").css("display", "none");
+        $("#loginScreen").css("display", "none");
+        $("#menuScreen").css("display", "block");
+        $("#gameScreen").css("display", "none");
     });
 
 });
@@ -70,6 +70,23 @@ $(document).ready(function () {
 
 // listen for data
 client.on('gameData', function (data) {
+    BOARD_OFFSET_X = document.getElementById("ctx").getBoundingClientRect().left;
+    BOARD_OFFSET_Y = document.getElementById("ctx").getBoundingClientRect().top;
+
+    // set name of player1
+    if (data[1].player1 != null) {
+        $("#textGamePlayer1").html(data[1].player1.name);
+    } else {
+        $("#textGamePlayer1").html("[Player 1]");
+    }
+
+    // set name of player2
+    if (data[1].player2 != null) {
+        $("#textGamePlayer2").html(data[1].player2.name);
+    } else {
+        $("#textGamePlayer2").html("[Player 2]");
+    }
+
     // clear screen
     ctx.clearRect(0, 0, 500, 500);
 
@@ -94,8 +111,8 @@ client.on('gameData', function (data) {
     });
 
     // draw ships
-    for (var i = 0; i < data.length; i++) {
-        var ship = data[i];
+    for (var i = 0; i < data[0].length; i++) {
+        var ship = data[0][i];
 
         var width = 50;
         var height = 50;
@@ -140,8 +157,8 @@ client.on('menuData', function (data) {
             $("#buttonGameJoin-" + game.id).click(() => {
                 client.emit('gameJoin', { gameID: game.id });
 
-                $("#menuWrapper").css("display", "none");
-                $("#gameWrapper").css("display", "block");
+                $("#menuScreen").css("display", "none");
+                $("#gameScreen").css("display", "block");
                 $("#textGameName").html($("#menuGameName-" + game.id).html());
             });
         }

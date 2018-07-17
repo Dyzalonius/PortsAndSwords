@@ -13,14 +13,15 @@
     <div id="app">
         <h1>Ports & Swords</h1>
 
-        <div id="loginWrapper">
+        <div id="loginScreen">
             <label for="fieldLoginName">Nickname:</label>
             <br>
-            <input type="text" id="fieldLoginName" name="fieldLoginName" placeholder="XxYeetBoi3" minlength="3">
+            <input type="text" id="fieldLoginName" name="fieldLoginName" value="XxYeetBoi3" minlength="3">
+            <!-- FOR NOW YEETBOI IS A VALUE INSTEAD OF A PLACEHOLDER -->
             <button id="buttonLogin">Start</button>
         </div>
 
-        <div id="menuWrapper" style="display: none;">
+        <div id="menuScreen" style="display: none;">
             <h2 id="gameListTitle">Game list:</h2>
             <div id="gameList"></div>
 
@@ -28,13 +29,23 @@
             <button id="buttonGameCreate" class="gameJoin">Create game</button>
         </div>
 
-        <div id="gameWrapper" style="display: none;">
+        <div id="gameScreen" style="display: none;">
             <h2 id="textGameName">Game name</h2>
-            <div>
+            <button id="buttonGameLeave">Quit game</button>
+            <hr>
+            <div id="gameWrapper">
+                <div>
+                    <h3 id="textGamePlayer1">[Player 1]</h3>
+                    <br>
+                    <br>
+                    <br>
+                </div>
                 <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+                <div>
+                    <h3 id="textGamePlayer2">[Player 2]</h3>
+                </div>
             </div>
 
-            <button id="buttonGameLeave">Quit game</button>
         </div>
     </div>
 
