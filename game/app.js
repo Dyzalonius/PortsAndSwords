@@ -334,8 +334,9 @@ var Game = function (name) {
         return package;
     }
     self.checkOverlap = function (pos) {
-        for (var i in self.ships) {
+        for (var i = self.ships.length - 1; i >= 0; i--) {
             var ship = self.ships[i];
+            
             if (ship.checkOverlap(pos)) {
                 return ship;
             }
