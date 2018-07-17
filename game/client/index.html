@@ -3,19 +3,33 @@
 
 <head>
     <title>Ports & Swords</title>
+    <link rel="icon" href="./client/img/favicon.ico">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+    <link href="./client/css/game.css" rel="stylesheet">
 </head>
 
 <body>
     <div id="app">
-        <div id="menuWrapper">
+        <h1>Ports & Swords</h1>
+
+        <div id="loginWrapper">
+            <label for="fieldLoginName">Nickname:</label>
+            <br>
+            <input type="text" id="fieldLoginName" name="fieldLoginName" placeholder="XxYeetBoi3" minlength="3">
+            <button id="buttonLogin">Start</button>
+        </div>
+
+        <div id="menuWrapper" style="display: none;">
+            <h2 id="gameListTitle">Game list:</h2>
             <div id="gameList"></div>
 
+            <input type="text" id="fieldGameCreateName" name="fieldGameCreateName" value="" minlength="3">
             <button id="buttonGameCreate" class="gameJoin">Create game</button>
         </div>
 
         <div id="gameWrapper" style="display: none;">
+            <h2 id="textGameName">Game name</h2>
             <div>
                 <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
             </div>
@@ -23,7 +37,7 @@
             <button id="buttonGameLeave">Quit game</button>
         </div>
     </div>
-    
+
     <script src="/client/js/handleClient.js"></script>
 </body>
 

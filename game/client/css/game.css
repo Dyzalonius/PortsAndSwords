@@ -1,3 +1,10 @@
-button, canvas {
-    display: block;
+h1, h2 {
+    margin: 20px 0px;
+}
+
+#gameListTitle {
+    margin-bottom: 0px;
+}
+.gameListItem {
+    margin: 5px 0px;
 }

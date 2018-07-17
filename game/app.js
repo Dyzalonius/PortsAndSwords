@@ -175,9 +175,10 @@ Ship.spawn = function (id, gridX, gridY, direction, side) {
 var Player = function (id) {
     var self = Entity();
     self.id = id;
+    self.name = null;
     self.child = null;
-    self.lastMousePos = [0, 0];
     self.gameID = null;
+    self.lastMousePos = [0, 0];
 
     self.onDisconnect = function () {
         self.gameID = null;
@@ -198,7 +199,10 @@ Player.onConnect = function (client) {
         }
         if (data.inputId === 'O') {
             var game = Game.find(player.gameID);
-            game.restart();
+            
+            if (game != null) {
+                game.restart();
+            };
         }
     });
 
@@ -233,6 +237,22 @@ Player.onConnect = function (client) {
         };
     });
 
+    // listen for login
+    client.on('login', function (data) {
+        player.name = data.name;
+    });
+
+    // listen for gameCreate
+    client.on('gameCreate', function (data) {
+        var game = Game.create(data.name);
+
+        player.gameID = game.id;
+        game.clients.push(client);
+
+        console.log("\x1b[7m%s\x1b[0m", "Game '" + game.id + "' started.");
+        console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "'.");
+    });
+
     // listen for gameJoin
     client.on('gameJoin', function (data) {
         player.gameID = data.gameID;
@@ -240,17 +260,6 @@ Player.onConnect = function (client) {
         game = Game.find(data.gameID);
         game.clients.push(client);
 
-        console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "'.");
-    });
-
-    // listen for gameCreate
-    client.on('gameCreate', function () {
-        var game = Game.create();
-
-        player.gameID = game.id;
-        game.clients.push(client);
-
-        console.log("\x1b[7m%s\x1b[0m", "Game '" + game.id + "' started.");
         console.log("\x1b[37m%s\x1b[0m", "Game '" + game.id + "' joined by Client '" + client.id + "'.");
     });
 
@@ -282,9 +291,9 @@ Player.onDisconnect = function (client) {
 }
 
 // GAME
-var Game = function () {
+var Game = function (name) {
     var self = {
-        name: "",
+        name: name,
         id: nextGameID,
         clients: [],
         ships: [],
@@ -379,8 +388,8 @@ Game.emit = function () {
         CLIENT_LIST[i].emit('menuData', menuData);
     }
 }
-Game.create = function () {
-    game = Game();
+Game.create = function (name) {
+    game = Game(name);
     Game.emit();
 
     return game;

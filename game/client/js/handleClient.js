@@ -17,7 +17,7 @@ Img.ramRed.src = '/client/img/ram_red.png';
 var ctx = document.getElementById("ctx").getContext("2d");
 ctx.font = '30px Arial';
 var BOARD_OFFSET_X = 8;
-var BOARD_OFFSET_Y = 8;
+var BOARD_OFFSET_Y = 124;
 
 // connect to the server
 var client = io();
@@ -27,16 +27,37 @@ var client = io();
 ////////////////////////////////////////
 
 $(document).ready(function () {
-    $("#buttonGameCreate").click(() => {
-        client.emit('gameCreate');
+    $("#buttonLogin").click(() => {
+        if ($("#fieldLoginName").val().length >= 3) {
+            client.emit('login', { name: $("#fieldLoginName").val() });
 
-        $("#menuWrapper").css("display", "none");
-        $("#gameWrapper").css("display", "block");
+            $("#loginWrapper").css("display", "none");
+            $("#menuWrapper").css("display", "block");
+            $("#gameWrapper").css("display", "none");
+            $("#fieldGameCreateName").val($("#fieldLoginName").val() + "'s game");
+        } else {
+            alert('Name needs to be atleast 3 characters');
+        }
+    });
+
+    $("#buttonGameCreate").click(() => {
+        if ($("#fieldGameCreateName").val().length >= 3) {
+            client.emit('gameCreate', { name: $("#fieldGameCreateName").val() });
+
+            $("#loginWrapper").css("display", "none");
+            $("#menuWrapper").css("display", "none");
+            $("#gameWrapper").css("display", "block");
+            $("#textGameName").html($("#fieldGameCreateName").val());
+        } else {
+            alert('Name needs to be atleast 3 characters');
+        }
     });
 
     $("#buttonGameLeave").click(() => {
         client.emit('gameLeave');
 
+
+        $("#loginWrapper").css("display", "none");
         $("#menuWrapper").css("display", "block");
         $("#gameWrapper").css("display", "none");
     });
@@ -101,27 +122,34 @@ client.on('gameData', function (data) {
 client.on('menuData', function (data) {
     // Empty gameList
     $("#gameList").empty();
+    $("#gameList").append(`<hr><br>`);
 
     // Fill gameList
-    for (let i = 0; i < data.length; i++) {
-        let game = data[i];
+    if (data.length > 0) {
+        for (let i = 0; i < data.length; i++) {
+            let game = data[i];
 
-        // Create entry for the game
-        $("#gameList").append(`
-            <div>
-                game.name
-                <button id="buttonGameJoin-${game.id}" class="gameJoin" value=${game.id}>Join game</button>
+            // Create entry for the game
+            $("#gameList").append(`
+            <div class="gameListItem">
+                <label id="menuGameName-${game.id}">${game.name}</label> <button id="buttonGameJoin-${game.id}" class="gameJoin" value=${game.id}>Join game</button>
             </div>`
-        );
+            );
 
-        // Bind the join button to the game
-        $("#buttonGameJoin-" + game.id).click(() => {
-            client.emit('gameJoin', { gameID: game.id });
+            // Bind the join button to the game
+            $("#buttonGameJoin-" + game.id).click(() => {
+                client.emit('gameJoin', { gameID: game.id });
 
-            $("#menuWrapper").css("display", "none");
-            $("#gameWrapper").css("display", "block");
-        });
+                $("#menuWrapper").css("display", "none");
+                $("#gameWrapper").css("display", "block");
+                $("#textGameName").html($("#menuGameName-" + game.id).html());
+            });
+        }
+    } else {
+        $("#gameList").append(`<br>`);
     }
+
+    $("#gameList").append(`<br><hr>`);
 });
 
 ////////////////////////////////////////
@@ -140,11 +168,11 @@ document.onkeydown = function (event) {
 
 // emit input mousedown
 document.onmousedown = function (event) {
-    client.emit('mouseDown', { posX: event.clientX - BOARD_OFFSET_Y, posY: event.clientY - BOARD_OFFSET_Y });
+    client.emit('mouseDown', { posX: event.clientX - BOARD_OFFSET_X, posY: event.clientY - BOARD_OFFSET_Y });
 
     // start emit input mousePos
     document.addEventListener('mousemove', mouseMove = function (event) {
-        client.emit('mousePos', { posX: event.clientX - BOARD_OFFSET_Y, posY: event.clientY - BOARD_OFFSET_Y });
+        client.emit('mousePos', { posX: event.clientX - BOARD_OFFSET_X, posY: event.clientY - BOARD_OFFSET_Y });
     }, false);
 }
 
