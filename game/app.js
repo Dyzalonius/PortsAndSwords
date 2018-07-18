@@ -52,10 +52,8 @@ io.sockets.on('connection', function (client) {
 // ENTITY
 var Entity = function () {
     var self = {
-        posX: 0,
-        posY: 0,
-        width: 0,
-        height: 0,
+        pos: [0, 0],
+        size: [0, 0],
         speedX: 0,
         speedY: 0,
         id: ""
@@ -65,24 +63,27 @@ var Entity = function () {
 }
 
 // SHIP
-var Ship = function (id, posX, posY, direction, side) {
+var Ship = function (id, pos, direction, side) {
     var self = Entity();
     self.id = id;
-    self.posX = posX;
-    self.posY = posY;
-    self.posVisualX = posX;
-    self.posVisualY = posY;
-    self.direction = direction;
     self.side = side;
-    self.headingOffsetX = 0;
-    self.headingOffsetY = 0;
+    self.pos = pos;
+    self.direction = direction;
+    self.headingOffset = [0, 0];
     self.childOffset = [0, 0];
+    self.posPublic = pos;
+    self.sizePublic = self.size;
+    self.headingOffsetPublic = self.headingOffset;
 
+    self.initialize = function () {
+        self.updateDirection();
+        self.setPosGrid();
+    }
     self.checkOverlap = function (pos) {
-        if (pos[0] > (self.posX)
-            && pos[0] < (self.posX + self.width)
-            && pos[1] > (self.posY)
-            && pos[1] < (self.posY + self.height)) {
+        if (pos[0] > (self.pos[0])
+            && pos[0] < (self.pos[0] + self.size[0])
+            && pos[1] > (self.pos[1])
+            && pos[1] < (self.pos[1] + self.size[1])) {
             return true;
         }
         return false;
@@ -100,57 +101,47 @@ var Ship = function (id, posX, posY, direction, side) {
     self.updateDirection = function () {
         // update childOffset
         var temp = self.childOffset[0];
-        self.childOffset[0] = self.height - self.childOffset[1];
+        self.childOffset[0] = self.size[1] - self.childOffset[1];
         self.childOffset[1] = temp;
 
         // update dimensions
         switch (self.direction) {
             case 0:
-                self.width = 50;
-                self.height = 150;
-                self.headingOffsetX = 0;
-                self.headingOffsetY = 0;
+                self.size = [50, 150];
+                self.headingOffset [0, 0];
                 break;
 
             case 1:
-                self.width = 150;
-                self.height = 50;
-                self.headingOffsetX = self.width - 50;
-                self.headingOffsetY = self.height - 50;
+                self.size = [150, 50];
+                self.headingOffset = [self.size[0] - 50, self.size[1] - 50];
                 break;
 
             case 2:
-                self.width = 50;
-                self.height = 150;
-                self.headingOffsetX = self.width - 50;
-                self.headingOffsetY = self.height - 50;
+                self.size = [50, 150];
+                self.headingOffset = [self.size[0] - 50, self.size[1] - 50];
                 break;
 
             case 3:
-                self.width = 150;
-                self.height = 50;
-                self.headingOffsetX = 0;
-                self.headingOffsetY = 0;
+                self.size = [150, 50];
+                self.headingOffset = [0, 0];
                 break;
         }
     }
     self.setPosOffset = function (pos) {
-        self.posVisualX = (pos[0] - self.childOffset[0]);
-        self.posVisualY = (pos[1] - self.childOffset[1]);
+        self.pos = [(pos[0] - self.childOffset[0]), (pos[1] - self.childOffset[1])];
     }
     self.setPosGrid = function () {
-        self.posVisualX = Math.round(self.posVisualX / 50) * 50;
-        self.posVisualY = Math.round(self.posVisualY / 50) * 50;
-        self.posX = self.posVisualX;
-        self.posY = self.posVisualY;
+        self.pos = [(Math.round(self.pos[0] / 50) * 50), (Math.round(self.pos[1] / 50) * 50)];
+        self.posPublic = self.pos;
+        self.sizePublic = self.size;
+        self.headingOffsetPublic = self.headingOffset;
     }
 
-    self.updateDirection();
+    self.initialize();
     return self;
 }
 Ship.spawn = function (id, gridX, gridY, direction, side) {
-    var posX = gridX * 50;
-    var posY = gridY * 50;
+    var pos = [gridX * 50, gridY * 50];
 
     // setup facing north
     var isVertical = true;
@@ -173,7 +164,7 @@ Ship.spawn = function (id, gridX, gridY, direction, side) {
     }
 
     // create new ship
-    var ship = Ship(id, posX, posY, direction, side);
+    var ship = Ship(id, pos, direction, side);
 
     return ship;
 }
@@ -240,7 +231,7 @@ Player.onConnect = function (client) {
 
             if (ship != null) {
                 player.child = ship;
-                ship.childOffset = [(data.posX - ship.posX), (data.posY - ship.posY)];
+                ship.childOffset = [(data.posX - ship.pos[0]), (data.posY - ship.pos[1])];
             }
         }
     });
@@ -322,16 +313,20 @@ var Game = function (name) {
         // add positions of all ships to the package
         for (var i in self.ships) {
             var ship = self.ships[i];
-            var pos = [ship.posX, ship.posY];
+            var pos = ship.posPublic;
+            var size = ship.sizePublic;
+            var headingOffset = ship.headingOffsetPublic;
 
             if ((ship.side == 1 && game.player1 != null && game.player1.id == client.id) || (ship.side == 2 && game.player2 != null && game.player2.id == client.id)) {
-                pos = [ship.posVisualX, ship.posVisualY];
+                pos = ship.pos;
+                size = ship.size;
+                headingOffset = ship.headingOffset;
             }
 
             package[0].push({
                 pos: pos,
-                size: [ship.width, ship.height],
-                headingOffset: [ship.headingOffsetX, ship.headingOffsetY],
+                size: size,
+                headingOffset: headingOffset,
                 side: ship.side
             });
         }
