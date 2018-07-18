@@ -62,6 +62,13 @@ $(document).ready(function () {
         $("#gameScreen").css("display", "none");
     });
 
+    $("#buttonGameEndTurn").click(function () {
+        client.emit('endTurn');
+    });
+
+    $(".buttonGameWind").click(function () {
+        client.emit('wind', { direction: $(this).text() });
+    });
 });
 
 ////////////////////////////////////////
@@ -87,12 +94,34 @@ client.on('gameData', function (data) {
         $("#textGamePlayer2").html("[Player 2]");
     }
 
+    var windDirection = ["N", "E", "S", "W"][data[1].windDirection];
+
+    // get turn text
+    var turnText = "";
+    if (data[1].initiative == 1) {
+        if (data[1].player1 != null) {
+            turnText = data[1].player1.name + "'s turn";
+        } else {
+            turnText = "[Player 1]'s turn";
+        }
+    } else {
+        if (data[1].player2 != null) {
+            turnText = data[1].player2.name + "'s turn";
+        } else {
+            turnText = "[Player 2]'s turn";
+        }
+    }
+    turnText += " (windDirection: " + windDirection + ")";
+
+    // set turn text
+    $("#textGameTurn").html(turnText);
+
     // clear screen
     ctx.clearRect(0, 0, 500, 500);
 
     // draw grid
-    for (var i = 0; i < 10; i++) {
-        for (var j = 0; j < 10; j++) {
+    for (var i = 0; i <= 10; i++) {
+        for (var j = 0; j <= 10; j++) {
             ctx.strokeRect(i * 50, j * 50, (i + 1) * 50, (j + 1) * 50);
         }
     }

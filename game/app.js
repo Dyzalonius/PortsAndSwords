@@ -62,113 +62,6 @@ var Entity = function () {
     return self;
 }
 
-// SHIP
-var Ship = function (id, pos, direction, side) {
-    var self = Entity();
-    self.id = id;
-    self.side = side;
-    self.pos = pos;
-    self.direction = direction;
-    self.headingOffset = [0, 0];
-    self.childOffset = [0, 0];
-    self.posPublic = pos;
-    self.sizePublic = self.size;
-    self.headingOffsetPublic = self.headingOffset;
-
-    self.initialize = function () {
-        self.updateDirection();
-        self.setPosGrid();
-    }
-    self.checkOverlap = function (pos) {
-        if (pos[0] > (self.pos[0])
-            && pos[0] < (self.pos[0] + self.size[0])
-            && pos[1] > (self.pos[1])
-            && pos[1] < (self.pos[1] + self.size[1])) {
-            return true;
-        }
-        return false;
-    }
-    self.rotate = function (pos) {
-        // change direction
-        self.direction++;
-        if (self.direction == 4) {
-            self.direction = 0;
-        }
-
-        self.updateDirection();
-        self.setPosOffset(pos);
-    }
-    self.updateDirection = function () {
-        // update childOffset
-        var temp = self.childOffset[0];
-        self.childOffset[0] = self.size[1] - self.childOffset[1];
-        self.childOffset[1] = temp;
-
-        // update dimensions
-        switch (self.direction) {
-            case 0:
-                self.size = [50, 150];
-                self.headingOffset [0, 0];
-                break;
-
-            case 1:
-                self.size = [150, 50];
-                self.headingOffset = [self.size[0] - 50, self.size[1] - 50];
-                break;
-
-            case 2:
-                self.size = [50, 150];
-                self.headingOffset = [self.size[0] - 50, self.size[1] - 50];
-                break;
-
-            case 3:
-                self.size = [150, 50];
-                self.headingOffset = [0, 0];
-                break;
-        }
-    }
-    self.setPosOffset = function (pos) {
-        self.pos = [(pos[0] - self.childOffset[0]), (pos[1] - self.childOffset[1])];
-    }
-    self.setPosGrid = function () {
-        self.pos = [(Math.round(self.pos[0] / 50) * 50), (Math.round(self.pos[1] / 50) * 50)];
-        self.posPublic = self.pos;
-        self.sizePublic = self.size;
-        self.headingOffsetPublic = self.headingOffset;
-    }
-
-    self.initialize();
-    return self;
-}
-Ship.spawn = function (id, gridX, gridY, direction, side) {
-    var pos = [gridX * 50, gridY * 50];
-
-    // setup facing north
-    var isVertical = true;
-    var isFacingTrue = false;
-
-    // use direction to determine isVertical and isFacingTrue 
-    switch (direction) {
-        case 1:
-            isVertical = false;
-            isFacingTrue = true;
-            break;
-
-        case 2:
-            isFacingTrue = true;
-            break;
-
-        case 3:
-            isVertical = false;
-            break;
-    }
-
-    // create new ship
-    var ship = Ship(id, pos, direction, side);
-
-    return ship;
-}
-
 // PLAYER
 var Player = function (id) {
     var self = Entity();
@@ -227,7 +120,7 @@ Player.onConnect = function (client) {
         var game = Game.findWithID(player.gameID);
 
         if (game != null) {
-            var ship = game.checkOverlap(player.lastMousePos, player.id);
+            var ship = game.checkHover(player.lastMousePos, player.id);
 
             if (ship != null) {
                 player.child = ship;
@@ -240,16 +133,23 @@ Player.onConnect = function (client) {
     client.on('mousePos', function (data) {
         player.lastMousePos = [data.posX, data.posY];
         if (player.child != null) {
-            player.child.setPosOffset(player.lastMousePos);
+            player.child.setPosWithOffset(player.lastMousePos);
         }
     });
 
     // listen for input mouseUp
     client.on('mouseUp', function () {
         if (player.child != null) {
-            player.child.setPosGrid();
-            player.child = null;
-        };
+            player.child.snapToGrid();
+
+            if (player.child.isLegalMove(Game.findWithPlayer(player).windDirection)) {
+                player.child.update();
+                player.child = null;
+            } else {
+                player.child.discardUpdate();
+                player.child = null;
+            }
+        }
     });
 
     // listen for login
@@ -278,25 +178,214 @@ Player.onConnect = function (client) {
         Game.findWithPlayer(player).onDisconnect(client);
     });
 
+    // listen for endTurn
+    client.on('endTurn', function () {
+        Game.findWithPlayer(player).changeInitiative();
+    });
+
+    // listen for wind
+    client.on('wind', function (data) {
+        var direction = ["N", "E", "S", "W"].findIndex((element) => {
+            return element == data.direction;
+        });
+
+        Game.findWithPlayer(player).changeWind(direction);
+    });
+
     Game.emitList();
+}
+
+// SHIP
+var Ship = function (id, pos, direction, side) {
+    var self = Entity();
+    self.id = id;
+    self.side = side;
+    self.pos = pos;
+    self.direction = direction;
+    self.headingOffset = [0, 0];
+    self.childOffset = [0, 0];
+    self.posPublic = pos;
+    self.sizePublic = self.size;
+    self.directionPublic = self.direction;
+    self.headingOffsetPublic = self.headingOffset;
+
+    self.initialize = function () {
+        self.updateDirection();
+        self.update();
+    }
+    self.update = function () {
+        self.posPublic = self.pos;
+        self.sizePublic = self.size;
+        self.headingOffsetPublic = self.headingOffset;
+        self.directionPublic = self.direction;
+    }
+    self.discardUpdate = function () {
+        self.pos = self.posPublic;
+        self.size = self.sizePublic;
+        self.headingOffset = self.headingOffsetPublic;
+        self.direction = self.directionPublic;
+    }
+    self.updateDirection = function () {
+        // update childOffset
+        var temp = self.childOffset[0];
+        self.childOffset[0] = self.size[1] - self.childOffset[1];
+        self.childOffset[1] = temp;
+
+        // update dimensions
+        switch (self.direction) {
+            case 0:
+                self.size = [50, 150];
+                self.headingOffset[0, 0];
+                break;
+
+            case 1:
+                self.size = [150, 50];
+                self.headingOffset = [self.size[0] - 50, self.size[1] - 50];
+                break;
+
+            case 2:
+                self.size = [50, 150];
+                self.headingOffset = [self.size[0] - 50, self.size[1] - 50];
+                break;
+
+            case 3:
+                self.size = [150, 50];
+                self.headingOffset = [0, 0];
+                break;
+        }
+    }
+    self.setPosWithOffset = function (pos) {
+        self.pos = [(pos[0] - self.childOffset[0]), (pos[1] - self.childOffset[1])];
+    }
+    self.snapToGrid = function () {
+        self.pos = [(Math.round(self.pos[0] / GRID_SIZE) * GRID_SIZE), (Math.round(self.pos[1] / GRID_SIZE) * GRID_SIZE)];
+    }
+    self.rotate = function (pos) {
+        // change direction
+        self.direction++;
+        if (self.direction == 4) {
+            self.direction = 0;
+        }
+
+        self.updateDirection();
+        self.setPosWithOffset(pos);
+    }
+    self.isLegalMove = function (windDirection) {
+        var deltaX = self.pos[0] - self.posPublic[0];
+        var deltaY = self.pos[1] - self.posPublic[1];
+        var isTurning = Math.abs(self.direction - self.directionPublic) % 2 == 1;
+
+        // basic illegal movement
+        if ((deltaX == 0 && deltaY == 0) // not moving
+            || Math.abs(deltaX) > 50 // too far in x direction
+            || Math.abs(deltaY) > 50) { // too far in y direction
+            return false;
+        }
+
+        // out of bounds
+        if (self.pos[0] < 0 || self.pos[0] + self.size[0] > 500 || self.pos[1] < 0 || self.pos[1] + self.size[1] > 500) {
+            return false;
+        }
+
+        // if not turning, transform deltaX and deltaY as if ship was facing North
+        if (!isTurning) {
+            for (var i = self.direction; i > 0; i--) {
+                var temp = deltaX;
+                deltaX = deltaY;
+                deltaY = -temp;
+            }
+        }
+
+        // illegal for wind direction
+        switch (Math.abs(self.directionPublic - windDirection)) {
+            case 0:
+                // Wind from front
+                return false;
+                break;
+            case 2:
+                // Wind from rear
+                if (!(deltaX == 0 && deltaY == -50 && self.direction == self.directionPublic)) {
+                    return false;
+                }
+                break;
+            case 1:
+            case 3:
+                // Wind from side
+                if (!((deltaX == 0 && deltaY == -50 && self.direction == self.directionPublic) || ((deltaX == -50 && deltaY == 50 && self.directionPublic % 2 == 0) && isTurning) || ((deltaX == 50 && deltaY == -50 && self.directionPublic % 2 == 1) && isTurning))) {
+                    return false;
+                }
+                break;
+            default:
+                break;
+        }
+
+        // otherwise legal
+        return true;
+    }
+    self.checkHover = function (pos) {
+        if (pos[0] > (self.pos[0])
+            && pos[0] < (self.pos[0] + self.size[0])
+            && pos[1] > (self.pos[1])
+            && pos[1] < (self.pos[1] + self.size[1])) {
+            return true;
+        }
+        return false;
+    }
+
+    self.initialize();
+    return self;
+}
+Ship.spawn = function (id, gridX, gridY, direction, side) {
+    var pos = [gridX * 50, gridY * 50];
+
+    // setup facing north
+    var isVertical = true;
+    var isFacingTrue = false;
+
+    // use direction to determine isVertical and isFacingTrue 
+    switch (direction) {
+        case 1:
+            isVertical = false;
+            isFacingTrue = true;
+            break;
+
+        case 2:
+            isFacingTrue = true;
+            break;
+
+        case 3:
+            isVertical = false;
+            break;
+    }
+
+    // create new ship
+    var ship = Ship(id, pos, direction, side);
+
+    return ship;
 }
 
 // GAME
 var Game = function (name) {
     var self = {
-        name: name,
         id: nextGameID,
+        name: name,
         clients: [],
         player1: null,
         player2: null,
         ships: [],
-        nextShipID: 0
+        nextShipID: 0,
+        windDirection: 0,
+        initiative: 1
     }
     self.initialize = function () {
+        nextGameID++;
+        GAME_LIST.push(self);
         self.spawnShips();
+        console.log("\x1b[7m%s\x1b[0m", "Game '" + self.id + "' started.");
     }
     self.restart = function () {
-        self.initialize();
+        self.initiative = 1;
+        self.spawnShips();
         console.log("\x1b[7m%s\x1b[0m", "Game '" + game.id + "' reset.");
     }
     self.spawnShips = function () {
@@ -333,15 +422,17 @@ var Game = function (name) {
 
         package.push({
             player1: self.player1,
-            player2: self.player2
+            player2: self.player2,
+            initiative: self.initiative,
+            windDirection: self.windDirection
         });
 
         return package;
     }
-    self.checkOverlap = function (pos, playerID) {
+    self.checkHover = function (pos, playerID) {
         for (var i = self.ships.length - 1; i >= 0; i--) {
             var ship = self.ships[i];
-            if (((ship.side == 1 && game.player1 != null && game.player1.id == playerID) || (ship.side == 2 && game.player2 != null && game.player2.id == playerID)) && ship.checkOverlap(pos)) {
+            if (((ship.side == 1 && game.player1 != null && game.player1.id == playerID) || (ship.side == 2 && game.player2 != null && game.player2.id == playerID)) && ship.side == self.initiative && ship.checkHover(pos)) {
                 return ship;
             }
         }
@@ -371,11 +462,18 @@ var Game = function (name) {
 
         console.log("\x1b[7m%s\x1b[0m", "Game '" + self.id + "' stopped.");
     }
+    self.changeWind = function (direction) {
+        self.windDirection = direction;
+    }
+    self.changeInitiative = function () {
+        if (self.initiative == 1) {
+            self.initiative = 2;
+        } else {
+            self.initiative = 1;
+        }
+    }
 
-    nextGameID++;
     self.initialize();
-    GAME_LIST.push(self);
-    console.log("\x1b[7m%s\x1b[0m", "Game '" + self.id + "' started.");
     return self;
 }
 Game.fetchList = function () {
@@ -442,6 +540,7 @@ Game.findWithPlayer = function (player) {
 var CLIENT_LIST = {};
 var GAME_LIST = [];
 var nextGameID = 0;
+var GRID_SIZE = 50;
 
 // start loop which ticks every 40ms
 setInterval(function () {

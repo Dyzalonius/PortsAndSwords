@@ -19,8 +19,6 @@ h1, h2 {
 #gameWrapper {
     width: 502px;
     margin: auto;
-    /* margin-left: calc(40%/2);
-    margin-right: calc(40%/2); */
 }
 #textGameName {
     margin-bottom: 0px;
@@ -30,13 +28,22 @@ h1, h2 {
 #buttonGameLeave {
     display: inline-block;
 }
+#gameTurnBar {
+    text-align: center;
+}
+#textGameTurn {
+    margin-bottom: 0px;
+    display: inline-block;
+}
 #textGamePlayer1 {
     color: red;
     float: right;
+    margin: 20px 0px;
 }
 #textGamePlayer2 {
     color: blue;
     float: left;
+    margin: 20px 0px;
 }
 #ctx {
     padding: auto;
