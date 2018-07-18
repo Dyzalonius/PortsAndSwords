@@ -70,6 +70,8 @@ var Ship = function (id, posX, posY, direction, side) {
     self.id = id;
     self.posX = posX;
     self.posY = posY;
+    self.posVisualX = posX;
+    self.posVisualY = posY;
     self.direction = direction;
     self.side = side;
     self.headingOffsetX = 0;
@@ -85,7 +87,6 @@ var Ship = function (id, posX, posY, direction, side) {
         }
         return false;
     }
-
     self.rotate = function (pos) {
         // change direction
         self.direction++;
@@ -96,7 +97,6 @@ var Ship = function (id, posX, posY, direction, side) {
         self.updateDirection();
         self.setPosOffset(pos);
     }
-
     self.updateDirection = function () {
         // update childOffset
         var temp = self.childOffset[0];
@@ -134,15 +134,15 @@ var Ship = function (id, posX, posY, direction, side) {
                 break;
         }
     }
-
     self.setPosOffset = function (pos) {
-        self.posX = (pos[0] - self.childOffset[0]);
-        self.posY = (pos[1] - self.childOffset[1]);
+        self.posVisualX = (pos[0] - self.childOffset[0]);
+        self.posVisualY = (pos[1] - self.childOffset[1]);
     }
-
     self.setPosGrid = function () {
-        self.posX = Math.round(self.posX / 50) * 50;
-        self.posY = Math.round(self.posY / 50) * 50;
+        self.posVisualX = Math.round(self.posVisualX / 50) * 50;
+        self.posVisualY = Math.round(self.posVisualY / 50) * 50;
+        self.posX = self.posVisualX;
+        self.posY = self.posVisualY;
     }
 
     self.updateDirection();
@@ -236,7 +236,7 @@ Player.onConnect = function (client) {
         var game = Game.findWithID(player.gameID);
 
         if (game != null) {
-            var ship = game.checkOverlap(player.lastMousePos);
+            var ship = game.checkOverlap(player.lastMousePos, player.id);
 
             if (ship != null) {
                 player.child = ship;
@@ -310,25 +310,28 @@ var Game = function (name) {
     }
     self.spawnShips = function () {
         self.ships = [];
-        [[1, 5, 0, 0], [5, 8, 3, 0], [2, 1, 1, 1], [8, 2, 2, 1]].forEach(element => {
+        [[1, 5, 0, 2], [5, 8, 3, 2], [2, 1, 1, 1], [8, 2, 2, 1]].forEach(element => {
             var ship = Ship.spawn(self.nextShipID, element[0], element[1], element[2], element[3]);
             self.nextShipID++;
             self.ships.push(ship);
         });
     }
-    self.getPackage = function () {
+    self.getPackage = function (client) {
         var package = [[]];
 
         // add positions of all ships to the package
         for (var i in self.ships) {
             var ship = self.ships[i];
+            var pos = [ship.posX, ship.posY];
+
+            if ((ship.side == 1 && game.player1 != null && game.player1.id == client.id) || (ship.side == 2 && game.player2 != null && game.player2.id == client.id)) {
+                pos = [ship.posVisualX, ship.posVisualY];
+            }
+
             package[0].push({
-                posX: ship.posX,
-                posY: ship.posY,
-                width: ship.width,
-                height: ship.height,
-                headingOffsetX: ship.headingOffsetX,
-                headingOffsetY: ship.headingOffsetY,
+                pos: pos,
+                size: [ship.width, ship.height],
+                headingOffset: [ship.headingOffsetX, ship.headingOffsetY],
                 side: ship.side
             });
         }
@@ -340,11 +343,10 @@ var Game = function (name) {
 
         return package;
     }
-    self.checkOverlap = function (pos) {
+    self.checkOverlap = function (pos, playerID) {
         for (var i = self.ships.length - 1; i >= 0; i--) {
             var ship = self.ships[i];
-
-            if (ship.checkOverlap(pos)) {
+            if (((ship.side == 1 && game.player1 != null && game.player1.id == playerID) || (ship.side == 2 && game.player2 != null && game.player2.id == playerID)) && ship.checkOverlap(pos)) {
                 return ship;
             }
         }
@@ -451,11 +453,12 @@ setInterval(function () {
     for (var i in GAME_LIST) {
         var game = GAME_LIST[i];
 
-        var gameData = game.getPackage();
-
         // send all clients the package
         for (var i in game.clients) {
-            game.clients[i].emit('gameData', gameData);
-        };
-    };
+            var client = game.clients[i];
+            var gameData = game.getPackage(client);
+
+            client.emit('gameData', gameData);
+        }
+    }
 }, 1000 / 50);

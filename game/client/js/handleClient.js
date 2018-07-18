@@ -116,18 +116,18 @@ client.on('gameData', function (data) {
 
         var width = 50;
         var height = 50;
-        var img = Img.ramBlue;
-        var fill = "#8888FF";
+        var img = Img.ramRed;
+        var fill = "#FF8888";
 
-        if (ship.side) {
-            img = Img.ramRed;
-            fill = "#FF8888";
+        if (ship.side == 2) {
+            img = Img.ramBlue;
+            fill = "#8888FF";
         }
 
         ctx.fillStyle = fill;
-        ctx.fillRect(ship.posX, ship.posY, ship.width, ship.height);
+        ctx.fillRect(ship.pos[0], ship.pos[1], ship.size[0], ship.size[1]);
 
-        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.posX + ship.headingOffsetX), (ship.posY + ship.headingOffsetY), width, height);
+        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.pos[0] + ship.headingOffset[0]), (ship.pos[1] + ship.headingOffset[1]), width, height);
     };
 });
 
