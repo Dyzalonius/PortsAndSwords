@@ -254,6 +254,16 @@ var Ship = function (id, pos, direction, side) {
                 break;
         }
     }
+    self.getMoves = function () {
+        moves = [];
+
+        moves.push({
+            pos: self.posPublic,
+            size: self.sizePublic
+        });
+
+        return moves;
+    }
     self.setPosWithOffset = function (pos) {
         self.pos = [(pos[0] - self.childOffset[0]), (pos[1] - self.childOffset[1])];
     }
@@ -399,27 +409,33 @@ var Game = function (name) {
     self.getPackage = function (client) {
         var package = [[]];
 
-        // add positions of all ships to the package
+        // add data of all ships to the package
         for (var i in self.ships) {
             var ship = self.ships[i];
             var pos = ship.posPublic;
             var size = ship.sizePublic;
             var headingOffset = ship.headingOffsetPublic;
+            var moves = [];
 
+            // if the ship belongs to the player, change what's pushed
             if ((ship.side == 1 && game.player1 != null && game.player1.id == client.id) || (ship.side == 2 && game.player2 != null && game.player2.id == client.id)) {
                 pos = ship.pos;
                 size = ship.size;
                 headingOffset = ship.headingOffset;
+
+                moves = ship.getMoves();
             }
 
             package[0].push({
                 pos: pos,
                 size: size,
                 headingOffset: headingOffset,
-                side: ship.side
+                side: ship.side,
+                moves: moves
             });
         }
 
+        // add game data to the package
         package.push({
             player1: self.player1,
             player2: self.player2,

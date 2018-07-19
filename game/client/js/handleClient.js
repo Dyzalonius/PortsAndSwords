@@ -18,6 +18,8 @@ var ctx = document.getElementById("ctx").getContext("2d");
 ctx.font = '30px Arial';
 var BOARD_OFFSET_X = 0;
 var BOARD_OFFSET_Y = 0;
+var ICON_WIDTH = 50;
+var ICON_HEIGHT = 50;
 
 // connect to the server
 var client = io();
@@ -128,23 +130,18 @@ client.on('gameData', function (data) {
 
     // draw anchors
     [[0, 8, 0], [0, 9, 0], [1, 9, 0], [8, 0, 1], [9, 0, 1], [9, 1, 1]].forEach(element => {
-        var width = 50;
-        var height = 50;
-
         var img = Img.anchorBlue;
+
         if (element[2] == 1) {
             img = Img.anchorRed;
         }
 
-        ctx.drawImage(img, 0, 0, img.width, img.height, element[0] * 50, element[1] * 50, width, height);
+        ctx.drawImage(img, 0, 0, img.width, img.height, element[0] * 50, element[1] * 50, ICON_WIDTH, ICON_HEIGHT);
     });
 
     // draw ships
     for (var i = 0; i < data[0].length; i++) {
         var ship = data[0][i];
-
-        var width = 50;
-        var height = 50;
         var img = Img.ramRed;
         var fill = "#FF8888";
 
@@ -153,10 +150,23 @@ client.on('gameData', function (data) {
             fill = "#8888FF";
         }
 
+        // draw visible move options if ship belong to the player with initiative
+        if (data[1].initiative == ship.side) {
+            for (var j = 0; j < ship.moves.length; j++) {
+                var move = ship.moves[j];
+
+                ctx.fillStyle = 'rgba(0,0,0,0.3)';
+                // ctx.fillStyle = fill;
+                ctx.fillRect(move.pos[0], move.pos[1], move.size[0], move.size[1]);
+            }
+        }
+
+        // draw hull
         ctx.fillStyle = fill;
         ctx.fillRect(ship.pos[0], ship.pos[1], ship.size[0], ship.size[1]);
 
-        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.pos[0] + ship.headingOffset[0]), (ship.pos[1] + ship.headingOffset[1]), width, height);
+        // draw icon
+        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.pos[0] + ship.headingOffset[0]), (ship.pos[1] + ship.headingOffset[1]), ICON_WIDTH, ICON_HEIGHT);
     };
 });
 
