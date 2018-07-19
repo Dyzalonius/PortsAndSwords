@@ -18,8 +18,7 @@ var ctx = document.getElementById("ctx").getContext("2d");
 ctx.font = '30px Arial';
 var BOARD_OFFSET_X = 0;
 var BOARD_OFFSET_Y = 0;
-var ICON_WIDTH = 50;
-var ICON_HEIGHT = 50;
+var GRID_SIZE = 50;
 
 // connect to the server
 var client = io();
@@ -136,37 +135,30 @@ client.on('gameData', function (data) {
             img = Img.anchorRed;
         }
 
-        ctx.drawImage(img, 0, 0, img.width, img.height, element[0] * 50, element[1] * 50, ICON_WIDTH, ICON_HEIGHT);
+        ctx.drawImage(img, 0, 0, img.width, img.height, element[0] * 50, element[1] * 50, GRID_SIZE, GRID_SIZE);
     });
 
     // draw ships
     for (var i = 0; i < data[0].length; i++) {
         var ship = data[0][i];
-        var img = Img.ramRed;
-        var fill = "#FF8888";
-
-        if (ship.side == 2) {
-            img = Img.ramBlue;
-            fill = "#8888FF";
-        }
+        var img = [Img.ramRed, Img.ramBlue][ship.side - 1];
 
         // draw visible move options if ship belong to the player with initiative
         if (data[1].initiative == ship.side) {
             for (var j = 0; j < ship.moves.length; j++) {
                 var move = ship.moves[j];
 
-                ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                // ctx.fillStyle = fill;
+                ctx.fillStyle = move.color;
                 ctx.fillRect(move.pos[0], move.pos[1], move.size[0], move.size[1]);
             }
         }
 
         // draw hull
-        ctx.fillStyle = fill;
+        ctx.fillStyle = ship.color;
         ctx.fillRect(ship.pos[0], ship.pos[1], ship.size[0], ship.size[1]);
 
         // draw icon
-        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.pos[0] + ship.headingOffset[0]), (ship.pos[1] + ship.headingOffset[1]), ICON_WIDTH, ICON_HEIGHT);
+        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.pos[0] + ship.headingOffset[0]), (ship.pos[1] + ship.headingOffset[1]), GRID_SIZE, GRID_SIZE);
     };
 });
 

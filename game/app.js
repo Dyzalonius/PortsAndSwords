@@ -254,12 +254,73 @@ var Ship = function (id, pos, direction, side) {
                 break;
         }
     }
-    self.getMoves = function () {
-        moves = [];
+    self.getMoves = function (windDirection) {
+        var moves = [];
+        var size = [50, 50];
+        var color = ["rgba(255,102,102,0.3)", "rgba(102,102,255,0.3)"][self.side - 1];
+        var positions = [];
 
+        // get positions of moves based on windDirection as if ship was facing North
+        switch (Math.abs(self.directionPublic - windDirection)) {
+            case 2:
+                // wind from rear
+                switch (self.directionPublic) {
+                    case 0:
+                        positions.push([self.posPublic[0], self.posPublic[1] - 50]);
+                        break;
+                    case 1:
+                        positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
+                        break;
+                    case 2:
+                        positions.push([self.posPublic[0], self.posPublic[1] + 150]);
+                        break;
+                    case 3:
+                        positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
+                        break;
+                }
+                break;
+            case 1:
+            case 3:
+                // wind from side
+                switch (self.directionPublic) {
+                    case 0:
+                        positions.push([self.posPublic[0], self.posPublic[1] - 50]);
+                        positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
+                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                        break;
+                    case 1:
+                        positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
+                        positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
+                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                        break;
+                    case 2:
+                        positions.push([self.posPublic[0], self.posPublic[1] + 150]);
+                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                        positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
+                        break;
+                    case 3:
+                        positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
+                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                        positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
+                        break;
+                }
+                break;
+        }
+
+        // push moves
+        for (var i = 0; i < positions.length; i++) {
+            moves.push({
+                pos: positions[i],
+                size: size,
+                color: color
+            });
+        }
+
+        // push current position
         moves.push({
             pos: self.posPublic,
-            size: self.sizePublic
+            size: self.sizePublic,
+            color: "rgba(0,0,0,0.3)"
         });
 
         return moves;
@@ -309,18 +370,18 @@ var Ship = function (id, pos, direction, side) {
         // illegal for wind direction
         switch (Math.abs(self.directionPublic - windDirection)) {
             case 0:
-                // Wind from front
+                // wind from front
                 return false;
                 break;
             case 2:
-                // Wind from rear
+                // wind from rear
                 if (!(deltaX == 0 && deltaY == -50 && self.direction == self.directionPublic)) {
                     return false;
                 }
                 break;
             case 1:
             case 3:
-                // Wind from side
+                // wind from side
                 if (!((deltaX == 0 && deltaY == -50 && self.direction == self.directionPublic) || ((deltaX == -50 && deltaY == 50 && self.directionPublic % 2 == 0) && isTurning) || ((deltaX == 50 && deltaY == -50 && self.directionPublic % 2 == 1) && isTurning))) {
                     return false;
                 }
@@ -423,7 +484,7 @@ var Game = function (name) {
                 size = ship.size;
                 headingOffset = ship.headingOffset;
 
-                moves = ship.getMoves();
+                moves = ship.getMoves(self.windDirection);
             }
 
             package[0].push({
@@ -431,7 +492,8 @@ var Game = function (name) {
                 size: size,
                 headingOffset: headingOffset,
                 side: ship.side,
-                moves: moves
+                moves: moves,
+                color: ["rgba(255,102,102,1)", "rgba(102,102,255,1)"][ship.side - 1]
             });
         }
 
