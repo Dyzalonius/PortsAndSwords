@@ -143,6 +143,7 @@ Player.onConnect = function (client) {
             player.child.snapToGrid();
 
             if (player.child.isLegalMove(Game.findWithPlayer(player).windDirection)) {
+                player.child.allowMove = false;
                 player.child.update();
                 player.child = null;
             } else {
@@ -181,6 +182,7 @@ Player.onConnect = function (client) {
     // listen for endTurn
     client.on('endTurn', function () {
         Game.findWithPlayer(player).changeInitiative();
+        Game.findWithPlayer(player).resetAllowMove();
     });
 
     // listen for wind
@@ -208,6 +210,7 @@ var Ship = function (id, pos, direction, side) {
     self.sizePublic = self.size;
     self.directionPublic = self.direction;
     self.headingOffsetPublic = self.headingOffset;
+    self.allowMove = true;
 
     self.initialize = function () {
         self.updateDirection();
@@ -260,60 +263,62 @@ var Ship = function (id, pos, direction, side) {
         var color = ["rgba(255,102,102,0.3)", "rgba(102,102,255,0.3)"][self.side - 1];
         var positions = [];
 
-        // get positions of moves based on windDirection as if ship was facing North
-        switch (Math.abs(self.directionPublic - windDirection)) {
-            case 2:
-                // wind from rear
-                switch (self.directionPublic) {
-                    case 0:
-                        positions.push([self.posPublic[0], self.posPublic[1] - 50]);
-                        break;
-                    case 1:
-                        positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
-                        break;
-                    case 2:
-                        positions.push([self.posPublic[0], self.posPublic[1] + 150]);
-                        break;
-                    case 3:
-                        positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
-                        break;
-                }
-                break;
-            case 1:
-            case 3:
-                // wind from side
-                switch (self.directionPublic) {
-                    case 0:
-                        positions.push([self.posPublic[0], self.posPublic[1] - 50]);
-                        positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
-                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
-                        break;
-                    case 1:
-                        positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
-                        positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
-                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
-                        break;
-                    case 2:
-                        positions.push([self.posPublic[0], self.posPublic[1] + 150]);
-                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
-                        positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
-                        break;
-                    case 3:
-                        positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
-                        positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
-                        positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
-                        break;
-                }
-                break;
-        }
+        // get positions of moves based on windDirection
+        if (self.allowMove) {
+            switch (Math.abs(self.directionPublic - windDirection)) {
+                case 2:
+                    // wind from rear
+                    switch (self.directionPublic) {
+                        case 0:
+                            positions.push([self.posPublic[0], self.posPublic[1] - 50]);
+                            break;
+                        case 1:
+                            positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
+                            break;
+                        case 2:
+                            positions.push([self.posPublic[0], self.posPublic[1] + 150]);
+                            break;
+                        case 3:
+                            positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
+                            break;
+                    }
+                    break;
+                case 1:
+                case 3:
+                    // wind from side
+                    switch (self.directionPublic) {
+                        case 0:
+                            positions.push([self.posPublic[0], self.posPublic[1] - 50]);
+                            positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
+                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                            break;
+                        case 1:
+                            positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
+                            positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
+                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                            break;
+                        case 2:
+                            positions.push([self.posPublic[0], self.posPublic[1] + 150]);
+                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                            positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
+                            break;
+                        case 3:
+                            positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
+                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                            positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
+                            break;
+                    }
+                    break;
+            }
 
-        // push moves
-        for (var i = 0; i < positions.length; i++) {
-            moves.push({
-                pos: positions[i],
-                size: size,
-                color: color
-            });
+            // push moves
+            for (var i = 0; i < positions.length; i++) {
+                moves.push({
+                    pos: positions[i],
+                    size: size,
+                    color: color
+                });
+            }
         }
 
         // push current position
@@ -345,6 +350,11 @@ var Ship = function (id, pos, direction, side) {
         var deltaX = self.pos[0] - self.posPublic[0];
         var deltaY = self.pos[1] - self.posPublic[1];
         var isTurning = Math.abs(self.direction - self.directionPublic) % 2 == 1;
+
+        // no move allowed anymore
+        if (!self.allowMove) {
+            return false;
+        }
 
         // basic illegal movement
         if ((deltaX == 0 && deltaY == 0) // not moving
@@ -548,6 +558,11 @@ var Game = function (name) {
             self.initiative = 2;
         } else {
             self.initiative = 1;
+        }
+    }
+    self.resetAllowMove = function () {
+        for (i = 0; i < self.ships.length; i++) {
+            self.ships[i].allowMove = true;
         }
     }
 
