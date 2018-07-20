@@ -29,7 +29,9 @@ var client = io();
 
 $(document).ready(function () {
     $("#buttonLogin").click(() => {
-        if ($("#fieldLoginName").val().length >= 3) {
+        var nicknameLength = $("#fieldLoginName").val().length;
+
+        if (nicknameLength >= 3 && nicknameLength <= 12) {
             client.emit('login', { name: $("#fieldLoginName").val() });
 
             $("#loginScreen").css("display", "none");
@@ -37,12 +39,13 @@ $(document).ready(function () {
             $("#gameScreen").css("display", "none");
             $("#fieldGameCreateName").val($("#fieldLoginName").val() + "'s game");
         } else {
-            alert('Name needs to be atleast 3 characters');
+            alert('Name needs to be 3 to 12 characters');
         }
     });
 
     $("#buttonGameCreate").click(() => {
-        if ($("#fieldGameCreateName").val().length >= 3) {
+        var gameNameLength = $("#fieldGameCreateName").val().length;
+        if (gameNameLength >= 3 && gameNameLength <= 25) {
             client.emit('gameCreate', { name: $("#fieldGameCreateName").val() });
 
             $("#loginScreen").css("display", "none");
@@ -50,7 +53,7 @@ $(document).ready(function () {
             $("#gameScreen").css("display", "block");
             $("#textGameName").html($("#fieldGameCreateName").val());
         } else {
-            alert('Name needs to be atleast 3 characters');
+            alert('Name needs to be 3 to 25 characters');
         }
     });
 
