@@ -82,17 +82,33 @@ $(document).ready(function () {
 // listen for data
 client.on('gameData', function (data) {
     if (!data[1].windDirectionConfirmed) {
+        // enable step 1
+        $("#textGameStep1").css("color", "black");
         $(".buttonGameWind").removeAttr("disabled");
+
+        // disable steps 2 and 3
+        $("#textGameStep2").css("color", "gray");
+        $("#textGameStep3").css("color", "gray");
+        $("#buttonGameEndTurn").attr("disabled", "disabled");
     } else {
+        // disable step 1
+        $("#textGameStep1").css("color", "gray");
         $(".buttonGameWind").attr("disabled", "disabled");
+
+        // enable steps 2 and 3
+        $("#textGameStep2").css("color", "black");
+        $("#buttonGameEndTurn").removeAttr("disabled");
+        $("#textGameStep3").css("color", "black");
     }
 
     // enable or disable buttons
-    if (data[1].hasInitiative) {
-        $("#buttonGameEndTurn").removeAttr("disabled");
-    } else {
-        $("#buttonGameEndTurn").attr("disabled", "disabled");
+    if (!data[1].hasInitiative) {
+        //  disable steps 1, 2 and 3
+        $("#textGameStep1").css("color", "gray");
+        $("#textGameStep2").css("color", "gray");
+        $("#textGameStep3").css("color", "gray");
         $(".buttonGameWind").attr("disabled", "disabled");
+        $("#buttonGameEndTurn").attr("disabled", "disabled");
     }
 
     // set name of player1
