@@ -32,32 +32,59 @@
         <div id="gameScreen" style="display: none;">
             <h2 id="textGameName">Game name</h2>
             <button id="buttonGameLeave">Quit game</button>
+
             <hr>
+
             <div id="gameWrapper">
-                <div id="gameTurnBar">
-                    <h2 id="textGameTurn">[Player 1]'s turn</h2>
-                    <div>
-                        <button id="buttonGameEndTurn">End turn</button>
-                        <button class="buttonGameWind">N</button>
-                        <button class="buttonGameWind">E</button>
-                        <button class="buttonGameWind">S</button>
-                        <button class="buttonGameWind">W</button>
+                <div id="gameWrapperLeft">
+                    <div id="gameWrapperLeftHeader">
+                        <h3 id="textGamePlayer1">[Player 1]</h3>
+                        <br>
+                        <br>
+                        <br>
+                    </div>
+
+                    <div id="game">
+                        <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
+                    </div>
+
+                    <div id="gameWrapperLeftFooter">
+                        <h3 id="textGamePlayer2">[Player 2]</h3>
+                        <br>
+                        <br>
+                        <br>
                     </div>
                 </div>
-                <div id="gameHeader">
-                    <h3 id="textGamePlayer1">[Player 1]</h3>
-                    <br>
-                    <br>
-                    <br>
-                </div>
-                <div id="game">
-                    <canvas id="ctx" width="500" height="500" style="border:1px solid #000000;"></canvas>
-                </div>
-                <div id="gameFooter">
-                    <h3 id="textGamePlayer2">[Player 2]</h3>
-                    <br>
-                    <br>
-                    <br>
+
+                <div id="gameWrapperRight">
+                    <div id="gameWrapperRightHeader">
+                        <br>
+                        <br>
+                        <br>
+                    </div>
+
+                    <div width="200" style="padding:5px; border:1px solid #000000;">
+                        1. Choose the wind
+                        <div>
+                            <button class="buttonGameWind">N</button>
+                            <button class="buttonGameWind">E</button>
+                            <button class="buttonGameWind">S</button>
+                            <button class="buttonGameWind">W</button>
+                            <button class="buttonGameWind">Confirm</button>
+                        </div>
+                        <hr> 2. Move the ships
+                        <hr> 3. End turn
+                        <button id="buttonGameEndTurn">End turn</button>
+                    </div>
+
+                    <div id="gameWrapperRightHeader">
+                        <div id="gameTurnBar">
+                            <h2 id="textGameTurn">[Player 1]'s turn (windDirection: N)</h2>
+                        </div>
+                        <br>
+                        <br>
+                        <br>
+                    </div>
                 </div>
             </div>
         </div>

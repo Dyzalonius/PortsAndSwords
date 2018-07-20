@@ -266,6 +266,9 @@ var Ship = function (id, pos, direction, side) {
         // get positions of moves based on windDirection
         if (self.allowMove) {
             switch (Math.abs(self.directionPublic - windDirection)) {
+                case 0:
+                    // wind from front
+                    self.allowMove = false;
                 case 2:
                     // wind from rear
                     switch (self.directionPublic) {

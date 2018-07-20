@@ -5,7 +5,7 @@ h1, h2 {
 
 
 
-/* GAME LIST */
+/* MENU SCREEN */
 #gameListTitle {
     margin-bottom: 0px;
 }
@@ -15,11 +15,7 @@ h1, h2 {
 
 
 
-/* GAME */
-#gameWrapper {
-    width: 502px;
-    margin: auto;
-}
+/* GAME SCREEN */
 #textGameName {
     margin-bottom: 0px;
     display: inline-block;
@@ -27,6 +23,18 @@ h1, h2 {
 }
 #buttonGameLeave {
     display: inline-block;
+}
+#gameWrapper {
+    width: 822px;
+    margin: auto;
+}
+
+
+
+/* GAME WRAPPER LEFT */
+#gameWrapperLeft {
+    /* display: inline-block; */
+    float: left;
 }
 #gameTurnBar {
     text-align: center;
@@ -38,13 +46,24 @@ h1, h2 {
 #textGamePlayer1 {
     color: red;
     float: right;
-    margin: 20px 0px;
+    margin: 0px;
+    margin-top: 15px;
 }
 #textGamePlayer2 {
     color: blue;
     float: left;
-    margin: 20px 0px;
+    margin: 0px;
+    margin-top: 10px;
 }
-#ctx {
+/* #ctx {
     padding: auto;
+} */
+
+
+
+/* GAME WRAPPER RIGHT */
+#gameWrapperRight {
+    width: 300px;
+    margin-left: 20px;
+    float: left;
 }

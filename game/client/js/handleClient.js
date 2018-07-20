@@ -118,10 +118,10 @@ client.on('gameData', function (data) {
             turnText = "[Player 2]'s turn";
         }
     }
-    turnText += " (windDirection: " + windDirection + ")";
+    var windText = "(windDirection: " + windDirection + ")";
 
     // set turn text
-    $("#textGameTurn").html(turnText);
+    $("#textGameTurn").html(turnText + `<br>` + windText);
 
     // MOVE ALL THOSE THINGS (^^^) TO A SEPERATE EMIT&LISTEN
 
@@ -136,7 +136,7 @@ client.on('gameData', function (data) {
     }
 
     // draw anchors
-    [[0, 8, 1], [0, 9, 1], [1, 9, 1], [8, 0, 2], [9, 0, 2], [9, 1, 2]].forEach(element => {
+    [[8, 0, 1], [9, 0, 1], [9, 1, 1], [0, 8, 2], [0, 9, 2], [1, 9, 2]].forEach(element => {
         var img = [Img.anchorRed, Img.anchorBlue][element[2] - 1];
 
         ctx.drawImage(img, 0, 0, img.width, img.height, element[0] * 50, element[1] * 50, GRID_SIZE, GRID_SIZE);
