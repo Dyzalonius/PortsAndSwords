@@ -182,7 +182,6 @@ Player.onConnect = function (client) {
     // listen for endTurn
     client.on('endTurn', function () {
         Game.findWithPlayer(player).changeInitiative();
-        Game.findWithPlayer(player).resetAllowMove();
     });
 
     // listen for wind
@@ -192,6 +191,7 @@ Player.onConnect = function (client) {
         });
 
         Game.findWithPlayer(player).changeWind(direction);
+        Game.findWithPlayer(player).resetAllowMove();
     });
 
     Game.emitList();
@@ -502,6 +502,7 @@ var Game = function (name) {
                 size: size,
                 headingOffset: headingOffset,
                 side: ship.side,
+                hasInitiative: (ship.side == self.initiative),
                 moves: moves,
                 color: ["rgba(255,102,102,1)", "rgba(102,102,255,1)"][ship.side - 1]
             });
@@ -512,6 +513,7 @@ var Game = function (name) {
             player1: self.player1,
             player2: self.player2,
             initiative: self.initiative,
+            hasInitiative: ((self.player1.id != null && self.player1.id == client.id) && self.initiative == 1) || ((self.player2.id != null && self.player2.id == client.id) && self.initiative == 2),
             windDirection: self.windDirection
         });
 
@@ -587,10 +589,10 @@ Game.fetchList = function () {
     return package;
 }
 Game.emitList = function () {
-    var menuData = Game.fetchList();
+    var menuScreenData = Game.fetchList();
 
     for (var i in CLIENT_LIST) {
-        CLIENT_LIST[i].emit('menuData', menuData);
+        CLIENT_LIST[i].emit('menuScreenData', menuScreenData);
     }
 }
 Game.create = function (name) {

@@ -73,13 +73,19 @@ $(document).ready(function () {
 });
 
 ////////////////////////////////////////
-//            HANDLE GAME             //
+//             GAME DATA              //
 ////////////////////////////////////////
 
 // listen for data
 client.on('gameData', function (data) {
-    BOARD_OFFSET_X = document.getElementById("ctx").getBoundingClientRect().left;
-    BOARD_OFFSET_Y = document.getElementById("ctx").getBoundingClientRect().top;
+    // enable or disable buttons
+    if (data[1].hasInitiative) {
+        $("#buttonGameEndTurn").removeAttr("disabled");
+        $(".buttonGameWind").removeAttr("disabled");
+    } else {
+        $("#buttonGameEndTurn").attr("disabled", "disabled");
+        $(".buttonGameWind").attr("disabled", "disabled");
+    }
 
     // set name of player1
     if (data[1].player1 != null) {
@@ -117,6 +123,8 @@ client.on('gameData', function (data) {
     // set turn text
     $("#textGameTurn").html(turnText);
 
+    // MOVE ALL THOSE THINGS (^^^) TO A SEPERATE EMIT&LISTEN
+
     // clear screen
     ctx.clearRect(0, 0, 500, 500);
 
@@ -128,12 +136,8 @@ client.on('gameData', function (data) {
     }
 
     // draw anchors
-    [[0, 8, 0], [0, 9, 0], [1, 9, 0], [8, 0, 1], [9, 0, 1], [9, 1, 1]].forEach(element => {
-        var img = Img.anchorBlue;
-
-        if (element[2] == 1) {
-            img = Img.anchorRed;
-        }
+    [[0, 8, 1], [0, 9, 1], [1, 9, 1], [8, 0, 2], [9, 0, 2], [9, 1, 2]].forEach(element => {
+        var img = [Img.anchorRed, Img.anchorBlue][element[2] - 1];
 
         ctx.drawImage(img, 0, 0, img.width, img.height, element[0] * 50, element[1] * 50, GRID_SIZE, GRID_SIZE);
     });
@@ -143,8 +147,8 @@ client.on('gameData', function (data) {
         var ship = data[0][i];
         var img = [Img.ramRed, Img.ramBlue][ship.side - 1];
 
-        // draw visible move options if ship belong to the player with initiative
-        if (data[1].initiative == ship.side) {
+        // draw move options if ship has initiative
+        if (ship.hasInitiative) {
             for (var j = 0; j < ship.moves.length; j++) {
                 var move = ship.moves[j];
 
@@ -163,11 +167,19 @@ client.on('gameData', function (data) {
 });
 
 ////////////////////////////////////////
-//            HANDLE MENU             //
+//            GAME SCREEN             //
 ////////////////////////////////////////
 
-// listen for menu data
-client.on('menuData', function (data) {
+// listen for game screen data
+// client.on('gameScreenData', function (data) {
+// });
+
+////////////////////////////////////////
+//            MENU SCREEN             //
+////////////////////////////////////////
+
+// listen for menu screen data
+client.on('menuScreenData', function (data) {
     // Empty gameList
     $("#gameList").empty();
     $("#gameList").append(`<hr><br>`);
@@ -216,6 +228,9 @@ document.onkeydown = function (event) {
 
 // emit input mousedown
 document.onmousedown = function (event) {
+    BOARD_OFFSET_X = document.getElementById("ctx").getBoundingClientRect().left;
+    BOARD_OFFSET_Y = document.getElementById("ctx").getBoundingClientRect().top;
+
     client.emit('mouseDown', { posX: event.clientX - BOARD_OFFSET_X, posY: event.clientY - BOARD_OFFSET_Y });
 
     // start emit input mousePos
