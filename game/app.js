@@ -513,7 +513,7 @@ var Game = function (name) {
             player1: self.player1,
             player2: self.player2,
             initiative: self.initiative,
-            hasInitiative: ((self.player1.id != null && self.player1.id == client.id) && self.initiative == 1) || ((self.player2.id != null && self.player2.id == client.id) && self.initiative == 2),
+            hasInitiative: ((self.player1 != null && self.player1.id == client.id) && self.initiative == 1) || ((self.player2 != null && self.player2.id == client.id) && self.initiative == 2),
             windDirection: self.windDirection
         });
 
