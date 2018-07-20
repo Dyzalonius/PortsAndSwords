@@ -71,7 +71,7 @@ $(document).ready(function () {
     });
 
     $(".buttonGameWind").click(function () {
-        client.emit('wind', { direction: $(this).text() });
+        client.emit('wind', { request: $(this).text() });
     });
 });
 
@@ -81,10 +81,15 @@ $(document).ready(function () {
 
 // listen for data
 client.on('gameData', function (data) {
+    if (!data[1].windDirectionConfirmed) {
+        $(".buttonGameWind").removeAttr("disabled");
+    } else {
+        $(".buttonGameWind").attr("disabled", "disabled");
+    }
+
     // enable or disable buttons
     if (data[1].hasInitiative) {
         $("#buttonGameEndTurn").removeAttr("disabled");
-        $(".buttonGameWind").removeAttr("disabled");
     } else {
         $("#buttonGameEndTurn").attr("disabled", "disabled");
         $(".buttonGameWind").attr("disabled", "disabled");
@@ -105,6 +110,7 @@ client.on('gameData', function (data) {
     }
 
     var windDirection = ["N", "E", "S", "W"][data[1].windDirection];
+    var windDirectionPublic = ["N", "E", "S", "W"][data[1].windDirectionPublic];
 
     // get turn text
     var turnText = "";
@@ -121,7 +127,11 @@ client.on('gameData', function (data) {
             turnText = "[Player 2]'s turn";
         }
     }
-    var windText = "(windDirection: " + windDirection + ")";
+    var windText = "(windDirection: " + windDirectionPublic + ")";
+
+    if (data[1].hasInitiative) {
+        windText = "(windDirection: " + windDirection + ")";
+    }
 
     // set turn text
     $("#textGameTurn").html(turnText + `<br>` + windText);

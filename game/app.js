@@ -142,7 +142,9 @@ Player.onConnect = function (client) {
         if (player.child != null) {
             player.child.snapToGrid();
 
-            if (player.child.isLegalMove(Game.findWithPlayer(player).windDirection)) {
+            var game = Game.findWithPlayer(player);
+
+            if (player.child.isLegalMove(game.windDirection, game.windDirectionConfirmed)) {
                 player.child.allowMove = false;
                 player.child.update();
                 player.child = null;
@@ -186,12 +188,20 @@ Player.onConnect = function (client) {
 
     // listen for wind
     client.on('wind', function (data) {
-        var direction = ["N", "E", "S", "W"].findIndex((element) => {
-            return element == data.direction;
-        });
+        var game = Game.findWithPlayer(player);
 
-        Game.findWithPlayer(player).changeWind(direction);
-        Game.findWithPlayer(player).resetAllowMove();
+        // check if the request is a confirm request or a changewind request
+        if (data.request == "Confirm") {
+            game.windDirectionConfirmed = true;
+            game.resetAllowMove();
+            game.confirmWind();
+        } else {
+            var direction = ["N", "E", "S", "W"].findIndex((element) => {
+                return element == data.request;
+            });
+
+            game.changeWind(direction);
+        }
     });
 
     Game.emitList();
@@ -266,9 +276,6 @@ var Ship = function (id, pos, direction, side) {
         // get positions of moves based on windDirection
         if (self.allowMove) {
             switch (Math.abs(self.directionPublic - windDirection)) {
-                case 0:
-                    // wind from front
-                    self.allowMove = false;
                 case 2:
                     // wind from rear
                     switch (self.directionPublic) {
@@ -349,13 +356,13 @@ var Ship = function (id, pos, direction, side) {
         self.updateDirection();
         self.setPosWithOffset(pos);
     }
-    self.isLegalMove = function (windDirection) {
+    self.isLegalMove = function (windDirection, windDirectionConfirmed) {
         var deltaX = self.pos[0] - self.posPublic[0];
         var deltaY = self.pos[1] - self.posPublic[1];
         var isTurning = Math.abs(self.direction - self.directionPublic) % 2 == 1;
 
-        // no move allowed anymore
-        if (!self.allowMove) {
+        // no move allowed anymore/yet
+        if (!self.allowMove || !windDirectionConfirmed) {
             return false;
         }
 
@@ -459,7 +466,9 @@ var Game = function (name) {
         ships: [],
         nextShipID: 0,
         windDirection: 0,
-        initiative: 1
+        windDirectionConfirmed: false,
+        initiative: 1,
+        windDirectionPublic: 0
     }
     self.initialize = function () {
         nextGameID++;
@@ -517,7 +526,9 @@ var Game = function (name) {
             player2: self.player2,
             initiative: self.initiative,
             hasInitiative: ((self.player1 != null && self.player1.id == client.id) && self.initiative == 1) || ((self.player2 != null && self.player2.id == client.id) && self.initiative == 2),
-            windDirection: self.windDirection
+            windDirection: self.windDirection,
+            windDirectionPublic: self.windDirectionPublic,
+            windDirectionConfirmed: self.windDirectionConfirmed
         });
 
         return package;
@@ -558,12 +569,16 @@ var Game = function (name) {
     self.changeWind = function (direction) {
         self.windDirection = direction;
     }
+    self.confirmWind = function () {
+        self.windDirectionPublic = self.windDirection;
+    }
     self.changeInitiative = function () {
         if (self.initiative == 1) {
             self.initiative = 2;
         } else {
             self.initiative = 1;
         }
+        self.windDirectionConfirmed = false;
     }
     self.resetAllowMove = function () {
         for (i = 0; i < self.ships.length; i++) {
