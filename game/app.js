@@ -374,9 +374,9 @@ var Ship = function (id, pos, direction, side) {
         }
 
         // out of bounds
-        if (self.pos[0] < 0 || self.pos[0] + self.size[0] > 500 || self.pos[1] < 0 || self.pos[1] + self.size[1] > 500) {
-            return false;
-        }
+        // if (self.pos[0] < 0 || self.pos[0] + self.size[0] > 500 || self.pos[1] < 0 || self.pos[1] + self.size[1] > 500) {
+        //     return false;
+        // }
 
         // if not turning, transform deltaX and deltaY as if ship was facing North
         if (!isTurning) {
@@ -536,6 +536,7 @@ var Game = function (name) {
     self.checkHover = function (pos, playerID) {
         for (var i = self.ships.length - 1; i >= 0; i--) {
             var ship = self.ships[i];
+
             if (((ship.side == 1 && game.player1 != null && game.player1.id == playerID) || (ship.side == 2 && game.player2 != null && game.player2.id == playerID)) && ship.side == self.initiative && ship.checkHover(pos)) {
                 return ship;
             }

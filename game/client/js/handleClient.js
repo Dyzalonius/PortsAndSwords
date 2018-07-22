@@ -155,12 +155,12 @@ client.on('gameData', function (data) {
     // MOVE ALL THOSE THINGS (^^^) TO A SEPERATE EMIT&LISTEN
 
     // clear screen
-    ctx.clearRect(0, 0, 500, 500);
+    ctx.clearRect(0, 0, 600, 600);
 
     // draw grid
-    for (var i = 0; i <= 10; i++) {
-        for (var j = 0; j <= 10; j++) {
-            ctx.strokeRect(i * 50, j * 50, (i + 1) * 50, (j + 1) * 50);
+    for (var i = 0; i < 10; i++) {
+        for (var j = 0; j < 10; j++) {
+            ctx.strokeRect(GRID_SIZE + i * GRID_SIZE, GRID_SIZE + j * GRID_SIZE, GRID_SIZE, GRID_SIZE);
         }
     }
 
@@ -168,7 +168,7 @@ client.on('gameData', function (data) {
     [[8, 0, 1], [9, 0, 1], [9, 1, 1], [0, 8, 2], [0, 9, 2], [1, 9, 2]].forEach(element => {
         var img = [Img.anchorRed, Img.anchorBlue][element[2] - 1];
 
-        ctx.drawImage(img, 0, 0, img.width, img.height, element[0] * 50, element[1] * 50, GRID_SIZE, GRID_SIZE);
+        ctx.drawImage(img, 0, 0, img.width, img.height, GRID_SIZE + element[0] * GRID_SIZE, GRID_SIZE + element[1] * GRID_SIZE, GRID_SIZE, GRID_SIZE);
     });
 
     // draw ships
@@ -182,16 +182,16 @@ client.on('gameData', function (data) {
                 var move = ship.moves[j];
 
                 ctx.fillStyle = move.color;
-                ctx.fillRect(move.pos[0], move.pos[1], move.size[0], move.size[1]);
+                ctx.fillRect(GRID_SIZE + move.pos[0], GRID_SIZE + move.pos[1], move.size[0], move.size[1]);
             }
         }
 
         // draw hull
         ctx.fillStyle = ship.color;
-        ctx.fillRect(ship.pos[0], ship.pos[1], ship.size[0], ship.size[1]);
+        ctx.fillRect(GRID_SIZE + ship.pos[0], GRID_SIZE + ship.pos[1], ship.size[0], ship.size[1]);
 
         // draw icon
-        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), (ship.pos[0] + ship.headingOffset[0]), (ship.pos[1] + ship.headingOffset[1]), GRID_SIZE, GRID_SIZE);
+        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), GRID_SIZE + (ship.pos[0] + ship.headingOffset[0]), GRID_SIZE + (ship.pos[1] + ship.headingOffset[1]), GRID_SIZE, GRID_SIZE);
     };
 });
 
@@ -257,8 +257,8 @@ document.onkeydown = function (event) {
 
 // emit input mousedown
 document.onmousedown = function (event) {
-    BOARD_OFFSET_X = document.getElementById("ctx").getBoundingClientRect().left;
-    BOARD_OFFSET_Y = document.getElementById("ctx").getBoundingClientRect().top;
+    BOARD_OFFSET_X = GRID_SIZE + document.getElementById("ctx").getBoundingClientRect().left;
+    BOARD_OFFSET_Y = GRID_SIZE + document.getElementById("ctx").getBoundingClientRect().top;
 
     client.emit('mouseDown', { posX: event.clientX - BOARD_OFFSET_X, posY: event.clientY - BOARD_OFFSET_Y });
 
