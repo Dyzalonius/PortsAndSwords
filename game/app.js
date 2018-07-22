@@ -147,6 +147,7 @@ Player.onConnect = function (client) {
             if (player.child.isLegalMove(game.windDirection, game.windDirectionConfirmed)) {
                 player.child.allowMove = false;
                 player.child.update();
+                player.child.handleCollision(game);
                 player.child = null;
             } else {
                 player.child.discardUpdate();
@@ -225,6 +226,9 @@ var Ship = function (id, pos, direction, side) {
     self.initialize = function () {
         self.updateDirection();
         self.update();
+    }
+    self.destroy = function (game) {
+        game.removeShip(self);
     }
     self.update = function () {
         self.posPublic = self.pos;
@@ -413,6 +417,12 @@ var Ship = function (id, pos, direction, side) {
         // otherwise legal
         return true;
     }
+    self.collidesWith = function (ship) {
+        return (!(self.posPublic[1] + self.sizePublic[1] <= ship.posPublic[1]
+        || self.posPublic[0] >= ship.posPublic[0] + ship.sizePublic[0]
+        || self.posPublic[1] >= ship.posPublic[1] + ship.sizePublic[1]
+        || self.posPublic[0] + self.sizePublic[0] <= ship.posPublic[0]));
+    }
     self.checkHover = function (pos) {
         if (pos[0] > (self.pos[0])
             && pos[0] < (self.pos[0] + self.size[0])
@@ -421,6 +431,21 @@ var Ship = function (id, pos, direction, side) {
             return true;
         }
         return false;
+    }
+    self.handleCollision = function (game) {
+        // out of bounds
+        if (self.posPublic[0] < 0 || self.posPublic[0] + self.size[0] > 500 || self.posPublic[1] < 0 || self.posPublic[1] + self.size[1] > 500) {
+            self.destroy(game);
+        }
+
+        // check ramming
+        for (var i = game.ships.length - 1; i >= 0; i--) {
+            var ship = game.ships[i];
+
+            if (self != ship && self.collidesWith(ship)) {
+                ship.destroy(game);
+            }
+        }
     }
 
     self.initialize();
@@ -489,6 +514,9 @@ var Game = function (name) {
             self.ships.push(ship);
         });
     }
+    self.removeShip = function (ship) {
+        self.ships = self.ships.filter(element => element != ship);
+    }
     self.getPackage = function (client) {
         var package = [[]];
 
@@ -544,7 +572,7 @@ var Game = function (name) {
         return null;
     }
     self.popShip = function (ship) {
-        self.ships = self.ships.filter(element => element != ship);
+        self.removeShip(ship);
         self.ships.push(ship);
     }
     self.onDisconnect = function (client) {
@@ -589,7 +617,6 @@ var Game = function (name) {
             var ship = self.ships[i];
 
             if (self.initiative == ship.side) {
-                console.log(ship.side);
                 self.popShip(ship);
             }
         }
