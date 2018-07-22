@@ -542,6 +542,10 @@ var Game = function (name) {
         }
         return null;
     }
+    self.popShip = function (ship) {
+        self.ships = self.ships.filter(element => element != ship);
+        self.ships.push(ship);
+    }
     self.onDisconnect = function (client) {
         self.clients = self.clients.filter(element => element.id != client.id);
 
@@ -579,6 +583,15 @@ var Game = function (name) {
             self.initiative = 1;
         }
         self.windDirectionConfirmed = false;
+
+        for (var i in self.ships) {
+            var ship = self.ships[i];
+
+            if (self.initiative == ship.side) {
+                console.log(ship.side);
+                self.popShip(ship);
+            }
+        }
     }
     self.resetAllowMove = function () {
         for (i = 0; i < self.ships.length; i++) {
