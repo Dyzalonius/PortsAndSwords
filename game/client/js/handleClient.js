@@ -87,27 +87,38 @@ client.on('gameData', function (data) {
         $(".buttonGameWind").removeAttr("disabled");
 
         // disable steps 2 and 3
-        $("#textGameStep2").css("color", "gray");
-        $("#textGameStep3").css("color", "gray");
+        $("#textGameStep2").css("color", "lightgray");
+        $("#textGameStep3").css("color", "lightgray");
         $("#buttonGameEndTurn").attr("disabled", "disabled");
     } else {
-        // disable step 1
-        $("#textGameStep1").css("color", "gray");
-        $(".buttonGameWind").attr("disabled", "disabled");
+        if (!data[1].allShipsMoved) {
+            // enable steps 2
+            $("#textGameStep2").css("color", "black");
 
-        // enable steps 2 and 3
-        $("#textGameStep2").css("color", "black");
-        $("#buttonGameEndTurn").removeAttr("disabled");
-        $("#textGameStep3").css("color", "black");
+            // disable steps 1 and 3
+            $("#textGameStep1").css("color", "lightgray");
+            $(".buttonGameWind").attr("disabled", "disabled");
+            $("#textGameStep3").css("color", "lightgray");
+            $("#buttonGameEndTurn").attr("disabled", "disabled");
+        } else {
+            // enable step 3
+            $("#textGameStep3").css("color", "black");
+            $("#buttonGameEndTurn").removeAttr("disabled");
+
+            // disable steps 1 and 2
+            $("#textGameStep1").css("color", "lightgray");
+            $(".buttonGameWind").attr("disabled", "disabled");
+            $("#textGameStep2").css("color", "lightgray");
+        }
     }
 
     // enable or disable buttons
     if (!data[1].hasInitiative) {
         //  disable steps 1, 2 and 3
-        $("#textGameStep1").css("color", "gray");
-        $("#textGameStep2").css("color", "gray");
-        $("#textGameStep3").css("color", "gray");
+        $("#textGameStep1").css("color", "lightgray");
         $(".buttonGameWind").attr("disabled", "disabled");
+        $("#textGameStep2").css("color", "lightgray");
+        $("#textGameStep3").css("color", "lightgray");
         $("#buttonGameEndTurn").attr("disabled", "disabled");
     }
 
