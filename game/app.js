@@ -144,10 +144,10 @@ Player.onConnect = function (client) {
 
             var game = Game.findWithPlayer(player);
 
-            if (player.child.isLegalMove(game.windDirection, game.windDirectionConfirmed)) {
+            if (player.child.isLegalMove(game)) {
                 player.child.allowMove = false;
                 player.child.update();
-                player.child.handleCollision(game);
+                player.child.checkDestroy(game);
                 player.child = null;
             } else {
                 player.child.discardUpdate();
@@ -270,29 +270,29 @@ var Ship = function (id, pos, direction, side) {
                 break;
         }
     }
-    self.getMoves = function (windDirection) {
+    self.getMoves = function (game) {
         var moves = [];
         var size = [50, 50];
         var color = ["rgba(255,102,102,0.3)", "rgba(102,102,255,0.3)"][self.side - 1];
-        var positions = [];
+        var moveDatas = [];
 
-        // get positions of moves based on windDirection
+        // get moveDatas of moves based on windDirection
         if (self.allowMove) {
-            switch (Math.abs(self.directionPublic - windDirection)) {
+            switch (Math.abs(self.directionPublic - game.windDirection)) {
                 case 2:
                     // wind from rear
                     switch (self.directionPublic) {
                         case 0:
-                            positions.push([self.posPublic[0], self.posPublic[1] - 50]);
+                        moveDatas.push([self.posPublic[0], self.posPublic[1] - 50, 0]);
                             break;
                         case 1:
-                            positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
+                        moveDatas.push([self.posPublic[0] + 150, self.posPublic[1], 1]);
                             break;
                         case 2:
-                            positions.push([self.posPublic[0], self.posPublic[1] + 150]);
+                        moveDatas.push([self.posPublic[0], self.posPublic[1] + 150, 2]);
                             break;
                         case 3:
-                            positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
+                        moveDatas.push([self.posPublic[0] - 50, self.posPublic[1], 3]);
                             break;
                     }
                     break;
@@ -301,34 +301,53 @@ var Ship = function (id, pos, direction, side) {
                     // wind from side
                     switch (self.directionPublic) {
                         case 0:
-                            positions.push([self.posPublic[0], self.posPublic[1] - 50]);
-                            positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
-                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                        moveDatas.push([self.posPublic[0], self.posPublic[1] - 50, 0]);
+
+                            if (self.checkCollisionPostTurn(game, [-50, 50], [-50, 0], [0, 50])) {
+                                moveDatas.push([self.posPublic[0] - 50, self.posPublic[1] + 50, 3]);
+                            }
+                            if (self.checkCollisionPostTurn(game, [-50, 50], [-50, 50], [0, 0])) {
+                                moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] + 50, 1]);
+                            }
                             break;
                         case 1:
-                            positions.push([self.posPublic[0] + 150, self.posPublic[1]]);
-                            positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
-                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
+                        moveDatas.push([self.posPublic[0] + 150, self.posPublic[1], 1]);
+                            if (self.checkCollisionPostTurn(game, [50, -50], [50, -50], [0, 0])) {
+                                moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] - 50, 0]);
+                            }
+                            if (self.checkCollisionPostTurn(game, [50, -50], [0, -50], [50, 0])) {
+                                moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] + 50, 2]);
+                            }
                             break;
                         case 2:
-                            positions.push([self.posPublic[0], self.posPublic[1] + 150]);
-                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
-                            positions.push([self.posPublic[0] - 50, self.posPublic[1] + 50]);
+                        moveDatas.push([self.posPublic[0], self.posPublic[1] + 150, 2]);
+                            if (self.checkCollisionPostTurn(game, [-50, 50], [0, 50], [-50, 0])) {
+                                moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] + 50, 1]);
+                            }
+                            if (self.checkCollisionPostTurn(game, [-50, 50], [0, 0], [-50, 50])) {
+                                moveDatas.push([self.posPublic[0] - 50, self.posPublic[1] + 50, 3]);
+                            }
                             break;
                         case 3:
-                            positions.push([self.posPublic[0] - 50, self.posPublic[1]]);
-                            positions.push([self.posPublic[0] + 50, self.posPublic[1] + 50]);
-                            positions.push([self.posPublic[0] + 50, self.posPublic[1] - 50]);
+                        moveDatas.push([self.posPublic[0] - 50, self.posPublic[1], 3]);
+                            if (self.checkCollisionPostTurn(game, [50, -50], [0, 0], [50, -50])) {
+                                moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] + 50, 2]);
+                            }
+                            if (self.checkCollisionPostTurn(game, [50, -50], [50, 0], [0, -50])) {
+                                moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] - 50, 0]);
+                            }
                             break;
                     }
                     break;
             }
 
             // push moves
-            for (var i = 0; i < positions.length; i++) {
+            for (var i = 0; i < moveDatas.length; i++) {
+                var moveData = moveDatas[i];
                 moves.push({
-                    pos: positions[i],
+                    pos: [moveData[0], moveData[1]],
                     size: size,
+                    direction: moveData[2],
                     color: color
                 });
             }
@@ -359,68 +378,32 @@ var Ship = function (id, pos, direction, side) {
         self.updateDirection();
         self.setPosWithOffset(pos);
     }
-    self.isLegalMove = function (windDirection, windDirectionConfirmed) {
-        var deltaX = self.pos[0] - self.posPublic[0];
-        var deltaY = self.pos[1] - self.posPublic[1];
-        var isTurning = Math.abs(self.direction - self.directionPublic) % 2 == 1;
-
-        // no move allowed anymore/yet
-        if (!self.allowMove || !windDirectionConfirmed) {
+    self.isLegalMove = function (game) {
+        // no move allowed yet
+        if (!game.windDirectionConfirmed) {
             return false;
         }
+        
+        var moves = self.getMoves(game);
 
-        // basic illegal movement
-        if ((deltaX == 0 && deltaY == 0) // not moving
-            || Math.abs(deltaX) > 50 // too far in x direction
-            || Math.abs(deltaY) > 50) { // too far in y direction
-            return false;
-        }
+        // check if move is part of the legal moves
+        for (var i in moves) {
+            var move = moves[i];
 
-        // out of bounds
-        // if (self.pos[0] < 0 || self.pos[0] + self.size[0] > 500 || self.pos[1] < 0 || self.pos[1] + self.size[1] > 500) {
-        //     return false;
-        // }
-
-        // if not turning, transform deltaX and deltaY as if ship was facing North
-        if (!isTurning) {
-            for (var i = self.direction; i > 0; i--) {
-                var temp = deltaX;
-                deltaX = deltaY;
-                deltaY = -temp;
+            // ship icon is in the move spot, plus the turning variables are the same
+            if (move.pos[0] == (self.pos[0] + self.headingOffset[0]) && move.pos[1] == (self.pos[1] + self.headingOffset[1]) && move.direction == self.direction) {
+                return true;
             }
         }
 
-        // illegal for wind direction
-        switch (Math.abs(self.directionPublic - windDirection)) {
-            case 0:
-                // wind from front
-                return false;
-                break;
-            case 2:
-                // wind from rear
-                if (!(deltaX == 0 && deltaY == -50 && self.direction == self.directionPublic)) {
-                    return false;
-                }
-                break;
-            case 1:
-            case 3:
-                // wind from side
-                if (!((deltaX == 0 && deltaY == -50 && self.direction == self.directionPublic) || ((deltaX == -50 && deltaY == 50 && self.directionPublic % 2 == 0) && isTurning) || ((deltaX == 50 && deltaY == -50 && self.directionPublic % 2 == 1) && isTurning))) {
-                    return false;
-                }
-                break;
-            default:
-                break;
-        }
-
-        // otherwise legal
-        return true;
+        // otherwise illegal
+        return false;
     }
     self.collidesWith = function (ship) {
-        return (!(self.posPublic[1] + self.sizePublic[1] <= ship.posPublic[1]
-        || self.posPublic[0] >= ship.posPublic[0] + ship.sizePublic[0]
-        || self.posPublic[1] >= ship.posPublic[1] + ship.sizePublic[1]
-        || self.posPublic[0] + self.sizePublic[0] <= ship.posPublic[0]));
+        return (!(self.posPublic[1] + self.sizePublic[1] <= ship.pos[1]
+            || self.posPublic[0] >= ship.pos[0] + ship.size[0]
+            || self.posPublic[1] >= ship.pos[1] + ship.size[1]
+            || self.posPublic[0] + self.sizePublic[0] <= ship.pos[0]));
     }
     self.checkHover = function (pos) {
         if (pos[0] > (self.pos[0])
@@ -431,7 +414,35 @@ var Ship = function (id, pos, direction, side) {
         }
         return false;
     }
-    self.handleCollision = function (game) {
+    self.checkCollision = function (game) {
+        // check ramming
+        for (var i = game.ships.length - 1; i >= 0; i--) {
+            var ship = game.ships[i];
+
+            if (self.id != ship.id && ship.collidesWith(self)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    self.checkCollisionPostTurn = function (game, offsetShip, offsetTurnCircle1, offsetTurnCircle2) {
+        // check if would ram or turn through
+        for (var i = game.ships.length - 1; i >= 0; i--) {
+            var ship = game.ships[i];
+
+            // check if would ram
+            if (self.id != ship.id && ship.collidesWith({ pos: [self.posPublic[0] + offsetShip[0], self.posPublic[1] + offsetShip[1]], size: [self.sizePublic[1], self.sizePublic[0]] })) {
+                return false;
+            }
+
+            // check if would turn through
+            if (self.id != ship.id && (ship.collidesWith({ pos: [self.posPublic[0] + offsetTurnCircle1[0], self.posPublic[1] + offsetTurnCircle1[1]], size: [100, 100] }) || ship.collidesWith({ pos: [self.posPublic[0] + offsetTurnCircle2[0], self.posPublic[1] + offsetTurnCircle2[1]], size: [100, 100] }))) {
+                return false;
+            }
+        }
+        return true;
+    }
+    self.checkDestroy = function (game) {
         // out of bounds
         if (self.posPublic[0] < 0 || self.posPublic[0] + self.size[0] > 500 || self.posPublic[1] < 0 || self.posPublic[1] + self.size[1] > 500) {
             self.destroy(game);
@@ -535,7 +546,7 @@ var Game = function (name) {
                 size = ship.size;
                 headingOffset = ship.headingOffset;
 
-                moves = ship.getMoves(self.windDirection);
+                moves = ship.getMoves(self);
             }
 
             // if the ship hasn't moved yet, not all have moved
@@ -635,7 +646,7 @@ var Game = function (name) {
                 self.popShip(ship);
             }
         }
-        
+
         game.resetAllowMove();
     }
     self.resetAllowMove = function () {
