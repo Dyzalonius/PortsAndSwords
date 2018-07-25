@@ -567,8 +567,7 @@ var Game = function (name) {
             hasInitiative: ((self.player1 != null && self.player1.id == client.id) && self.initiative == 1) || ((self.player2 != null && self.player2.id == client.id) && self.initiative == 2),
             windDirection: self.windDirection,
             windDirectionPublic: self.windDirectionPublic,
-            windDirectionConfirmed: self.windDirectionConfirmed,
-            allShipsMoved: allShipsMoved
+            windDirectionConfirmed: self.windDirectionConfirmed
         });
 
         return package;

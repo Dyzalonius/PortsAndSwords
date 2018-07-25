@@ -85,19 +85,12 @@ client.on('gameData', function (data) {
         // disable step 2
         $("#textGameStep2").css("color", "lightgray");
     } else {
-        if (!data[1].allShipsMoved) {
-            // enable steps 2
-            $("#textGameStep2").css("color", "black");
+        // enable steps 2
+        $("#textGameStep2").css("color", "black");
 
-            // disable step 1
-            $("#textGameStep1").css("color", "lightgray");
-            $(".buttonGameWind").attr("disabled", "disabled");
-        } else {
-            // disable steps 1 and 2
-            $("#textGameStep1").css("color", "lightgray");
-            $(".buttonGameWind").attr("disabled", "disabled");
-            $("#textGameStep2").css("color", "lightgray");
-        }
+        // disable step 1
+        $("#textGameStep1").css("color", "lightgray");
+        $(".buttonGameWind").attr("disabled", "disabled");
     }
 
     // enable or disable buttons
