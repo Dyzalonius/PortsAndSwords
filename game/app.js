@@ -120,7 +120,7 @@ Player.onConnect = function (client) {
         var game = Game.findWithID(player.gameID);
 
         if (game != null) {
-            var ship = game.checkHover(player.lastMousePos, player.id);
+            var ship = game.checkPickup(player.lastMousePos, player.id);
 
             if (ship != null) {
                 player.child = ship;
@@ -140,18 +140,13 @@ Player.onConnect = function (client) {
     // listen for input mouseUp
     client.on('mouseUp', function () {
         if (player.child != null) {
-            player.child.snapToGrid();
-
             var game = Game.findWithPlayer(player);
 
-            if (player.child.isLegalMove(game)) {
-                player.child.allowMove = false;
-                player.child.update();
-                player.child.checkDestroy(game);
-                player.child = null;
-            } else {
-                player.child.discardUpdate();
-                player.child = null;
+            player.child.drop(game);
+            player.child = null;
+
+            if (game.checkTurnEnd()) {
+                Game.findWithPlayer(player).changeInitiative();
             }
         }
     });
@@ -180,11 +175,6 @@ Player.onConnect = function (client) {
 
         // remove the player from the game's clients
         Game.findWithPlayer(player).onDisconnect(client);
-    });
-
-    // listen for endTurn
-    client.on('endTurn', function () {
-        Game.findWithPlayer(player).changeInitiative();
     });
 
     // listen for wind
@@ -283,16 +273,16 @@ var Ship = function (id, pos, direction, side) {
                     // wind from rear
                     switch (self.directionPublic) {
                         case 0:
-                        moveDatas.push([self.posPublic[0], self.posPublic[1] - 50, 0]);
+                            moveDatas.push([self.posPublic[0], self.posPublic[1] - 50, 0]);
                             break;
                         case 1:
-                        moveDatas.push([self.posPublic[0] + 150, self.posPublic[1], 1]);
+                            moveDatas.push([self.posPublic[0] + 150, self.posPublic[1], 1]);
                             break;
                         case 2:
-                        moveDatas.push([self.posPublic[0], self.posPublic[1] + 150, 2]);
+                            moveDatas.push([self.posPublic[0], self.posPublic[1] + 150, 2]);
                             break;
                         case 3:
-                        moveDatas.push([self.posPublic[0] - 50, self.posPublic[1], 3]);
+                            moveDatas.push([self.posPublic[0] - 50, self.posPublic[1], 3]);
                             break;
                     }
                     break;
@@ -301,7 +291,7 @@ var Ship = function (id, pos, direction, side) {
                     // wind from side
                     switch (self.directionPublic) {
                         case 0:
-                        moveDatas.push([self.posPublic[0], self.posPublic[1] - 50, 0]);
+                            moveDatas.push([self.posPublic[0], self.posPublic[1] - 50, 0]);
 
                             if (self.checkCollisionPostTurn(game, [-50, 50], [-50, 0], [0, 50])) {
                                 moveDatas.push([self.posPublic[0] - 50, self.posPublic[1] + 50, 3]);
@@ -311,7 +301,7 @@ var Ship = function (id, pos, direction, side) {
                             }
                             break;
                         case 1:
-                        moveDatas.push([self.posPublic[0] + 150, self.posPublic[1], 1]);
+                            moveDatas.push([self.posPublic[0] + 150, self.posPublic[1], 1]);
                             if (self.checkCollisionPostTurn(game, [50, -50], [50, -50], [0, 0])) {
                                 moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] - 50, 0]);
                             }
@@ -320,7 +310,7 @@ var Ship = function (id, pos, direction, side) {
                             }
                             break;
                         case 2:
-                        moveDatas.push([self.posPublic[0], self.posPublic[1] + 150, 2]);
+                            moveDatas.push([self.posPublic[0], self.posPublic[1] + 150, 2]);
                             if (self.checkCollisionPostTurn(game, [-50, 50], [0, 50], [-50, 0])) {
                                 moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] + 50, 1]);
                             }
@@ -329,7 +319,7 @@ var Ship = function (id, pos, direction, side) {
                             }
                             break;
                         case 3:
-                        moveDatas.push([self.posPublic[0] - 50, self.posPublic[1], 3]);
+                            moveDatas.push([self.posPublic[0] - 50, self.posPublic[1], 3]);
                             if (self.checkCollisionPostTurn(game, [50, -50], [0, 0], [50, -50])) {
                                 moveDatas.push([self.posPublic[0] + 50, self.posPublic[1] + 50, 2]);
                             }
@@ -383,7 +373,7 @@ var Ship = function (id, pos, direction, side) {
         if (!game.windDirectionConfirmed) {
             return false;
         }
-        
+
         var moves = self.getMoves(game);
 
         // check if move is part of the legal moves
@@ -405,7 +395,7 @@ var Ship = function (id, pos, direction, side) {
             || self.posPublic[1] >= ship.pos[1] + ship.size[1]
             || self.posPublic[0] + self.sizePublic[0] <= ship.pos[0]));
     }
-    self.checkHover = function (pos) {
+    self.checkPickup = function (pos) {
         if (pos[0] > (self.pos[0])
             && pos[0] < (self.pos[0] + self.size[0])
             && pos[1] > (self.pos[1])
@@ -455,6 +445,17 @@ var Ship = function (id, pos, direction, side) {
             if (self != ship && self.collidesWith(ship)) {
                 ship.destroy(game);
             }
+        }
+    }
+    self.drop = function (game) {
+        self.snapToGrid();
+
+        if (self.isLegalMove(game)) {
+            self.allowMove = false;
+            self.update();
+            self.checkDestroy(game);
+        } else {
+            self.discardUpdate();
         }
     }
 
@@ -530,7 +531,6 @@ var Game = function (name) {
     }
     self.getPackage = function (client) {
         var package = [[]];
-        var allShipsMoved = true;
 
         // add data of all ships to the package
         for (var i in self.ships) {
@@ -545,13 +545,7 @@ var Game = function (name) {
                 pos = ship.pos;
                 size = ship.size;
                 headingOffset = ship.headingOffset;
-
                 moves = ship.getMoves(self);
-            }
-
-            // if the ship hasn't moved yet, not all have moved
-            if (ship.allowMove) {
-                allShipsMoved = false;
             }
 
             package[0].push({
@@ -579,15 +573,23 @@ var Game = function (name) {
 
         return package;
     }
-    self.checkHover = function (pos, playerID) {
+    self.checkPickup = function (pos, playerID) {
         for (var i = self.ships.length - 1; i >= 0; i--) {
             var ship = self.ships[i];
 
-            if (((ship.side == 1 && game.player1 != null && game.player1.id == playerID) || (ship.side == 2 && game.player2 != null && game.player2.id == playerID)) && ship.side == self.initiative && ship.checkHover(pos)) {
+            if (((ship.side == 1 && game.player1 != null && game.player1.id == playerID) || (ship.side == 2 && game.player2 != null && game.player2.id == playerID)) && ship.side == self.initiative && ship.checkPickup(pos)) {
                 return ship;
             }
         }
         return null;
+    }
+    self.checkTurnEnd = function () {
+        for (var i in self.ships) {
+            if (self.ships[i].allowMove) {
+                return false;
+            }
+        }
+        return true;
     }
     self.popShip = function (ship) {
         self.removeShip(ship);

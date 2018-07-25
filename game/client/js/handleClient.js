@@ -66,10 +66,6 @@ $(document).ready(function () {
         $("#gameScreen").css("display", "none");
     });
 
-    $("#buttonGameEndTurn").click(function () {
-        client.emit('endTurn');
-    });
-
     $(".buttonGameWind").click(function () {
         client.emit('wind', { request: $(this).text() });
     });
@@ -86,25 +82,17 @@ client.on('gameData', function (data) {
         $("#textGameStep1").css("color", "black");
         $(".buttonGameWind").removeAttr("disabled");
 
-        // disable steps 2 and 3
+        // disable step 2
         $("#textGameStep2").css("color", "lightgray");
-        $("#textGameStep3").css("color", "lightgray");
-        $("#buttonGameEndTurn").attr("disabled", "disabled");
     } else {
         if (!data[1].allShipsMoved) {
             // enable steps 2
             $("#textGameStep2").css("color", "black");
 
-            // disable steps 1 and 3
+            // disable step 1
             $("#textGameStep1").css("color", "lightgray");
             $(".buttonGameWind").attr("disabled", "disabled");
-            $("#textGameStep3").css("color", "lightgray");
-            $("#buttonGameEndTurn").attr("disabled", "disabled");
         } else {
-            // enable step 3
-            $("#textGameStep3").css("color", "black");
-            $("#buttonGameEndTurn").removeAttr("disabled");
-
             // disable steps 1 and 2
             $("#textGameStep1").css("color", "lightgray");
             $(".buttonGameWind").attr("disabled", "disabled");
@@ -114,12 +102,10 @@ client.on('gameData', function (data) {
 
     // enable or disable buttons
     if (!data[1].hasInitiative) {
-        //  disable steps 1, 2 and 3
+        //  disable steps 1 and 2
         $("#textGameStep1").css("color", "lightgray");
         $(".buttonGameWind").attr("disabled", "disabled");
         $("#textGameStep2").css("color", "lightgray");
-        $("#textGameStep3").css("color", "lightgray");
-        $("#buttonGameEndTurn").attr("disabled", "disabled");
     }
 
     // set name of player1
