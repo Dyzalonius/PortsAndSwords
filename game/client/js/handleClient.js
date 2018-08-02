@@ -34,7 +34,7 @@ $(document).ready(function () {
     $("#buttonLogin").click(() => {
         var nicknameLength = $("#fieldLoginName").val().length;
 
-        if (nicknameLength >= 3 && nicknameLength <= 12) {
+        if (nicknameLength >= 3 && nicknameLength <= 14) {
             client.emit('login', { name: $("#fieldLoginName").val() });
 
             $("#loginScreen").css("display", "none");
@@ -42,13 +42,13 @@ $(document).ready(function () {
             $("#gameScreen").css("display", "none");
             $("#fieldGameCreateName").val($("#fieldLoginName").val() + "'s game");
         } else {
-            alert('Name needs to be 3 to 12 characters');
+            alert('Name needs to be 3 to 14 characters');
         }
     });
 
     $("#buttonGameCreate").click(() => {
         var gameNameLength = $("#fieldGameCreateName").val().length;
-        if (gameNameLength >= 3 && gameNameLength <= 25) {
+        if (gameNameLength >= 3 && gameNameLength <= 32) {
             client.emit('gameCreate', { name: $("#fieldGameCreateName").val() });
 
             $("#loginScreen").css("display", "none");
@@ -56,7 +56,7 @@ $(document).ready(function () {
             $("#gameScreen").css("display", "block");
             $("#textGameName").html($("#fieldGameCreateName").val());
         } else {
-            alert('Name needs to be 3 to 25 characters');
+            alert('Name needs to be 3 to 32 characters');
         }
     });
 
