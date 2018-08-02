@@ -21,7 +21,8 @@ var BOARD_OFFSET_Y = 0;
 var GRID_LINE_WEIGHT = 1;
 var GRID_CELL_SIZE = 50;
 var GRID_SIZE = 10;
-var GRID_COLOR = "#000000";
+var GRID_OFFSET = GRID_CELL_SIZE * 2;
+var GRID_COLOR = "#222222";
 
 // connect to the server
 var client = io();
@@ -118,9 +119,6 @@ client.on('gameData', function (data) {
         $("#textGamePlayer2").html("[Player 2]");
     }
 
-    var windDirection = ["N", "E", "S", "W"][data[1].windDirection];
-    var windDirectionPublic = ["N", "E", "S", "W"][data[1].windDirectionPublic];
-
     // get turn text
     var turnText = "";
     if (data[1].initiative == 1) {
@@ -136,26 +134,82 @@ client.on('gameData', function (data) {
             turnText = "[Player 2]'s turn";
         }
     }
-    var windText = "(windDirection: " + windDirectionPublic + ")";
-
-    if (data[1].hasInitiative) {
-        windText = "(windDirection: " + windDirection + ")";
-    }
 
     // set turn text
-    $("#textGameTurn").html(turnText + `<br>` + windText);
+    $("#textGameTurn").html(turnText);
 
     // MOVE ALL THOSE THINGS (^^^) TO A SEPERATE EMIT&LISTEN
 
     // clear screen
-    ctx.clearRect(0, 0, 600, 600);
+    ctx.clearRect(0, 0, 700, 700);
 
-    // draw grid
+    // draw grid exterior
     ctx.strokeStyle = GRID_COLOR;
-    ctx.strokeRect(GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE);
+    ctx.lineWidth = 4;
+    ctx.strokeRect(GRID_OFFSET - 1, GRID_OFFSET - 1, GRID_CELL_SIZE * GRID_SIZE + 2, GRID_CELL_SIZE * GRID_SIZE + 2);
+
+    ctx.lineWidth = 8;
+    ctx.strokeRect(GRID_OFFSET - 10, GRID_OFFSET - 10, GRID_CELL_SIZE * GRID_SIZE + 20, GRID_CELL_SIZE * GRID_SIZE + 20);
+    ctx.lineWidth = 1;
+
+    // draw wind boxes
+    ctx.fillStyle = GRID_COLOR;
+    ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE, GRID_OFFSET - GRID_CELL_SIZE * 2, GRID_CELL_SIZE * 2, GRID_CELL_SIZE * 2);
+    ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE, GRID_CELL_SIZE * 2, GRID_CELL_SIZE * 2);
+    ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * 2, GRID_CELL_SIZE * 2);
+    ctx.fillRect(GRID_OFFSET - GRID_CELL_SIZE * 2, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE, GRID_CELL_SIZE * 2, GRID_CELL_SIZE * 2);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_OFFSET - GRID_CELL_SIZE * 2 + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+    ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + 10, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+    ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+    ctx.fillRect(GRID_OFFSET - GRID_CELL_SIZE * 2 + 10, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+
+    // draw wind text
+    ctx.font = "50px Georgia";
+    ctx.fillStyle = "black";
+    ctx.textAlign = "center";
+    ctx.fillText("E", GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + GRID_CELL_SIZE, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) + 15);
+    ctx.fillText("S", GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2), GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + GRID_CELL_SIZE + 15);
+    ctx.fillText("W", GRID_OFFSET - GRID_CELL_SIZE, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) + 15);
+    ctx.fillText("N", GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2), GRID_OFFSET - GRID_CELL_SIZE + 15);
+
+    // edit wind boxes and text if it's the wind direction
+    var visibleWindDirection = data[1].windDirectionPublic;
+    if (data[1].hasInitiative) {
+        visibleWindDirection = data[1].windDirection;
+    }
+    switch (visibleWindDirection) {
+        case 0:
+            ctx.fillStyle = GRID_COLOR;
+            ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_OFFSET - GRID_CELL_SIZE * 2 + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+            ctx.fillStyle = "white";
+            ctx.fillText("N", GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2), GRID_OFFSET - GRID_CELL_SIZE + 15);
+            break;
+        case 1:
+            ctx.fillStyle = GRID_COLOR;
+            ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + 10, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+            ctx.fillStyle = "white";
+            ctx.fillText("E", GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + GRID_CELL_SIZE, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) + 15);
+            break;
+        case 2:
+            ctx.fillStyle = GRID_COLOR;
+            ctx.fillRect(GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+            ctx.fillStyle = "white";
+            ctx.fillText("S", GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2), GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE + GRID_CELL_SIZE + 15);
+            break;
+        case 3:
+            ctx.fillStyle = GRID_COLOR;
+            ctx.fillRect(GRID_OFFSET - GRID_CELL_SIZE * 2 + 10, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) - GRID_CELL_SIZE + 10, GRID_CELL_SIZE * 2 - 20, GRID_CELL_SIZE * 2 - 20);
+            ctx.fillStyle = "white";
+            ctx.fillText("W", GRID_OFFSET - GRID_CELL_SIZE, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) + 15);
+            break;
+    }
+
+    // draw grid interior
+    ctx.strokeStyle = GRID_COLOR;
     for (var i = 0; i < 10; i++) {
         for (var j = 0; j < 10; j++) {
-            ctx.strokeRect(GRID_CELL_SIZE + i * GRID_CELL_SIZE, GRID_CELL_SIZE + j * GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE);
+            ctx.strokeRect(GRID_OFFSET + i * GRID_CELL_SIZE, GRID_OFFSET + j * GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE);
         }
     }
 
@@ -163,7 +217,7 @@ client.on('gameData', function (data) {
     [[8, 0, 1], [9, 0, 1], [9, 1, 1], [0, 8, 2], [0, 9, 2], [1, 9, 2]].forEach(element => {
         var img = [Img.anchorRed, Img.anchorBlue][element[2] - 1];
 
-        ctx.drawImage(img, 0, 0, img.width, img.height, GRID_CELL_SIZE + element[0] * GRID_CELL_SIZE + GRID_LINE_WEIGHT, GRID_CELL_SIZE + element[1] * GRID_CELL_SIZE + GRID_LINE_WEIGHT, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2);
+        ctx.drawImage(img, 0, 0, img.width, img.height, GRID_OFFSET + element[0] * GRID_CELL_SIZE + GRID_LINE_WEIGHT, GRID_OFFSET + element[1] * GRID_CELL_SIZE + GRID_LINE_WEIGHT, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2);
     });
 
     // draw ships
@@ -177,16 +231,16 @@ client.on('gameData', function (data) {
                 var move = ship.moves[j];
 
                 ctx.fillStyle = move.color;
-                ctx.fillRect(GRID_CELL_SIZE + move.pos[0] + GRID_LINE_WEIGHT, GRID_CELL_SIZE + move.pos[1] + GRID_LINE_WEIGHT, move.size[0] - GRID_LINE_WEIGHT * 2, move.size[1] - GRID_LINE_WEIGHT * 2);
+                ctx.fillRect(GRID_OFFSET + move.pos[0] + GRID_LINE_WEIGHT, GRID_OFFSET + move.pos[1] + GRID_LINE_WEIGHT, move.size[0] - GRID_LINE_WEIGHT * 2, move.size[1] - GRID_LINE_WEIGHT * 2);
             }
         }
 
         // draw hull
         ctx.fillStyle = ship.color;
-        ctx.fillRect(GRID_CELL_SIZE + ship.pos[0] + GRID_LINE_WEIGHT, GRID_CELL_SIZE + ship.pos[1] + GRID_LINE_WEIGHT, ship.size[0] - GRID_LINE_WEIGHT * 2, ship.size[1] - GRID_LINE_WEIGHT * 2);
+        ctx.fillRect(GRID_OFFSET + ship.pos[0] + GRID_LINE_WEIGHT, GRID_OFFSET + ship.pos[1] + GRID_LINE_WEIGHT, ship.size[0] - GRID_LINE_WEIGHT * 2, ship.size[1] - GRID_LINE_WEIGHT * 2);
 
         // draw icon
-        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), GRID_CELL_SIZE + (ship.pos[0] + ship.headingOffset[0]) + GRID_LINE_WEIGHT, GRID_CELL_SIZE + (ship.pos[1] + ship.headingOffset[1]) + GRID_LINE_WEIGHT, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2);
+        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), GRID_OFFSET + (ship.pos[0] + ship.headingOffset[0]) + GRID_LINE_WEIGHT, GRID_OFFSET + (ship.pos[1] + ship.headingOffset[1]) + GRID_LINE_WEIGHT, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2);
     };
 });
 
@@ -252,8 +306,8 @@ document.onkeydown = function (event) {
 
 // emit input mousedown
 document.onmousedown = function (event) {
-    BOARD_OFFSET_X = GRID_CELL_SIZE + document.getElementById("ctx").getBoundingClientRect().left;
-    BOARD_OFFSET_Y = GRID_CELL_SIZE + document.getElementById("ctx").getBoundingClientRect().top;
+    BOARD_OFFSET_X = GRID_OFFSET + document.getElementById("ctx").getBoundingClientRect().left;
+    BOARD_OFFSET_Y = GRID_OFFSET + document.getElementById("ctx").getBoundingClientRect().top;
 
     client.emit('mouseDown', { posX: event.clientX - BOARD_OFFSET_X, posY: event.clientY - BOARD_OFFSET_Y });
 
