@@ -18,7 +18,10 @@ var ctx = document.getElementById("ctx").getContext("2d");
 ctx.font = '30px Arial';
 var BOARD_OFFSET_X = 0;
 var BOARD_OFFSET_Y = 0;
-var GRID_SIZE = 50;
+var GRID_LINE_WEIGHT = 1;
+var GRID_CELL_SIZE = 50;
+var GRID_SIZE = 10;
+var GRID_COLOR = "#000000";
 
 // connect to the server
 var client = io();
@@ -148,9 +151,11 @@ client.on('gameData', function (data) {
     ctx.clearRect(0, 0, 600, 600);
 
     // draw grid
+    ctx.strokeStyle = GRID_COLOR;
+    ctx.strokeRect(GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE);
     for (var i = 0; i < 10; i++) {
         for (var j = 0; j < 10; j++) {
-            ctx.strokeRect(GRID_SIZE + i * GRID_SIZE, GRID_SIZE + j * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+            ctx.strokeRect(GRID_CELL_SIZE + i * GRID_CELL_SIZE, GRID_CELL_SIZE + j * GRID_CELL_SIZE, GRID_CELL_SIZE, GRID_CELL_SIZE);
         }
     }
 
@@ -158,7 +163,7 @@ client.on('gameData', function (data) {
     [[8, 0, 1], [9, 0, 1], [9, 1, 1], [0, 8, 2], [0, 9, 2], [1, 9, 2]].forEach(element => {
         var img = [Img.anchorRed, Img.anchorBlue][element[2] - 1];
 
-        ctx.drawImage(img, 0, 0, img.width, img.height, GRID_SIZE + element[0] * GRID_SIZE, GRID_SIZE + element[1] * GRID_SIZE, GRID_SIZE, GRID_SIZE);
+        ctx.drawImage(img, 0, 0, img.width, img.height, GRID_CELL_SIZE + element[0] * GRID_CELL_SIZE + GRID_LINE_WEIGHT, GRID_CELL_SIZE + element[1] * GRID_CELL_SIZE + GRID_LINE_WEIGHT, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2);
     });
 
     // draw ships
@@ -172,16 +177,16 @@ client.on('gameData', function (data) {
                 var move = ship.moves[j];
 
                 ctx.fillStyle = move.color;
-                ctx.fillRect(GRID_SIZE + move.pos[0], GRID_SIZE + move.pos[1], move.size[0], move.size[1]);
+                ctx.fillRect(GRID_CELL_SIZE + move.pos[0] + GRID_LINE_WEIGHT, GRID_CELL_SIZE + move.pos[1] + GRID_LINE_WEIGHT, move.size[0] - GRID_LINE_WEIGHT * 2, move.size[1] - GRID_LINE_WEIGHT * 2);
             }
         }
 
         // draw hull
         ctx.fillStyle = ship.color;
-        ctx.fillRect(GRID_SIZE + ship.pos[0], GRID_SIZE + ship.pos[1], ship.size[0], ship.size[1]);
+        ctx.fillRect(GRID_CELL_SIZE + ship.pos[0] + GRID_LINE_WEIGHT, GRID_CELL_SIZE + ship.pos[1] + GRID_LINE_WEIGHT, ship.size[0] - GRID_LINE_WEIGHT * 2, ship.size[1] - GRID_LINE_WEIGHT * 2);
 
         // draw icon
-        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), GRID_SIZE + (ship.pos[0] + ship.headingOffset[0]), GRID_SIZE + (ship.pos[1] + ship.headingOffset[1]), GRID_SIZE, GRID_SIZE);
+        ctx.drawImage(img, -10, -10, (img.width + 20), (img.height + 20), GRID_CELL_SIZE + (ship.pos[0] + ship.headingOffset[0]) + GRID_LINE_WEIGHT, GRID_CELL_SIZE + (ship.pos[1] + ship.headingOffset[1]) + GRID_LINE_WEIGHT, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2, GRID_CELL_SIZE - GRID_LINE_WEIGHT * 2);
     };
 });
 
@@ -247,8 +252,8 @@ document.onkeydown = function (event) {
 
 // emit input mousedown
 document.onmousedown = function (event) {
-    BOARD_OFFSET_X = GRID_SIZE + document.getElementById("ctx").getBoundingClientRect().left;
-    BOARD_OFFSET_Y = GRID_SIZE + document.getElementById("ctx").getBoundingClientRect().top;
+    BOARD_OFFSET_X = GRID_CELL_SIZE + document.getElementById("ctx").getBoundingClientRect().left;
+    BOARD_OFFSET_Y = GRID_CELL_SIZE + document.getElementById("ctx").getBoundingClientRect().top;
 
     client.emit('mouseDown', { posX: event.clientX - BOARD_OFFSET_X, posY: event.clientY - BOARD_OFFSET_Y });
 
