@@ -12,6 +12,14 @@ Img.ramBlue = new Image();
 Img.ramBlue.src = '/client/img/ram_blue.png';
 Img.ramRed = new Image();
 Img.ramRed.src = '/client/img/ram_red.png';
+Img.windN = new Image();
+Img.windN.src = '/client/img/windN.png';
+Img.windE = new Image();
+Img.windE.src = '/client/img/windE.png';
+Img.windS = new Image();
+Img.windS.src = '/client/img/windS.png';
+Img.windW = new Image();
+Img.windW.src = '/client/img/windW.png';
 
 // define context
 var ctx = document.getElementById("ctx").getContext("2d");
@@ -23,6 +31,7 @@ var GRID_CELL_SIZE = 50;
 var GRID_SIZE = 10;
 var GRID_OFFSET = GRID_CELL_SIZE * 2;
 var GRID_COLOR = "#222222";
+var windOffset = 0;
 
 // connect to the server
 var client = io();
@@ -143,6 +152,40 @@ client.on('gameData', function (data) {
     // clear screen
     ctx.clearRect(0, 0, 700, 700);
 
+    // edit wind boxes and text if it's the wind direction
+    var visibleWindDirection = data[1].windDirectionPublic;
+    if (data[1].hasInitiative) {
+        visibleWindDirection = data[1].windDirection;
+    }
+
+    // draw wind
+    switch (visibleWindDirection) {
+        case 0:
+            ctx.drawImage(Img.windN, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, windOffset, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE, windOffset);
+            ctx.drawImage(Img.windN, 0, 0, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, GRID_OFFSET + windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset);
+            break; //NOT DONE
+
+        case 1:
+            ctx.drawImage(Img.windE, windOffset, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE);
+            ctx.drawImage(Img.windE, 0, 0, windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, windOffset, GRID_CELL_SIZE * GRID_SIZE);
+            break;
+
+        case 2:
+            ctx.drawImage(Img.windS, 0, windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset);
+            ctx.drawImage(Img.windS, 0, 0, GRID_CELL_SIZE * GRID_SIZE, windOffset, GRID_OFFSET, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, windOffset);
+            break;
+
+        case 3:
+            ctx.drawImage(Img.windW, GRID_CELL_SIZE * GRID_SIZE - windOffset, 0, windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET, GRID_OFFSET, windOffset, GRID_CELL_SIZE * GRID_SIZE);
+            ctx.drawImage(Img.windW, 0, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET + windOffset, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE);
+            break;
+    }
+    // increment windOffset
+    windOffset++;
+    if (windOffset >= 500) {
+        windOffset = 0;
+    }
+
     // draw grid exterior
     ctx.strokeStyle = GRID_COLOR;
     ctx.lineWidth = 4;
@@ -173,11 +216,6 @@ client.on('gameData', function (data) {
     ctx.fillText("W", GRID_OFFSET - GRID_CELL_SIZE, GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2) + 15);
     ctx.fillText("N", GRID_OFFSET + GRID_CELL_SIZE * (GRID_SIZE / 2), GRID_OFFSET - GRID_CELL_SIZE + 15);
 
-    // edit wind boxes and text if it's the wind direction
-    var visibleWindDirection = data[1].windDirectionPublic;
-    if (data[1].hasInitiative) {
-        visibleWindDirection = data[1].windDirection;
-    }
     switch (visibleWindDirection) {
         case 0:
             ctx.fillStyle = GRID_COLOR;

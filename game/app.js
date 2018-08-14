@@ -263,7 +263,7 @@ var Ship = function (id, pos, direction, side) {
     self.getMoves = function (game) {
         var moves = [];
         var size = [50, 50];
-        var color = ["rgba(255,102,102,0.3)", "rgba(102,102,255,0.3)"][self.side - 1];
+        var color = ["rgba(255,102,102,0.5)", "rgba(102,102,255,0.5)"][self.side - 1];
         var moveDatas = [];
 
         // get moveDatas of moves based on windDirection
@@ -347,7 +347,7 @@ var Ship = function (id, pos, direction, side) {
         moves.push({
             pos: self.posPublic,
             size: self.sizePublic,
-            color: "rgba(0,0,0,0.3)"
+            color: "rgba(0,0,0,0.5)"
         });
 
         return moves;
