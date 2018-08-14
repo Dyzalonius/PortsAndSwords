@@ -29,13 +29,15 @@ h1, h2 {
     margin: auto;
 }
 
-
-
-/* GAME WRAPPER LEFT */
+/* GAME WRAPPER */
 #gameWrapperLeft {
     float: left;
-    margin-left: 100px;
-    margin-right: 100px;
+    margin-left: 86px;
+    margin-right: 86px;
+}
+#gameWrapperLeftHeader, #gameWrapperLeftFooter, #gameWrapperRightHeader {
+    height: 100px;
+    position: relative;
 }
 #gameTurnBar {
     text-align: center;
@@ -44,25 +46,28 @@ h1, h2 {
     margin-bottom: 0px;
     display: inline-block;
 }
+.textGamePlayer {
+    margin: 0px;
+    position: absolute;
+}
 #textGamePlayer1 {
     color: red;
-    float: right;
-    margin: 0px;
-    margin-top: 15px;
+    bottom: 0px;
+    right: 0px;
+    margin-bottom: 10px;
 }
 #textGamePlayer2 {
     color: blue;
-    float: left;
-    margin: 0px;
+    left: 0px;
     margin-top: 10px;
+}
+#game {
+    height: 500px;
+    margin: 14px;
 }
 #ctx {
     margin: -100px;
 }
-
-
-
-/* GAME WRAPPER RIGHT */
 #gameWrapperRight {
     width: 300px;
     margin-left: 10px;
