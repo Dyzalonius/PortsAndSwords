@@ -163,7 +163,7 @@ client.on('gameData', function (data) {
         case 0:
             ctx.drawImage(Img.windN, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, windOffset, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE, windOffset);
             ctx.drawImage(Img.windN, 0, 0, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, GRID_OFFSET + windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset);
-            break; //NOT DONE
+            break;
 
         case 1:
             ctx.drawImage(Img.windE, windOffset, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE);
