@@ -269,7 +269,7 @@ var Ship = function (id, pos, direction, side) {
         // get moveDatas of moves based on windDirection
         if (self.allowMove) {
             switch (Math.abs(self.directionPublic - game.windDirection)) {
-                case 2:
+                case 0:
                     // wind from rear
                     switch (self.directionPublic) {
                         case 0:

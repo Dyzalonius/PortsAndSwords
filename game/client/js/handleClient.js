@@ -161,23 +161,23 @@ client.on('gameData', function (data) {
     // draw wind
     switch (visibleWindDirection) {
         case 0:
-            ctx.drawImage(Img.windN, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, windOffset, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE, windOffset);
-            ctx.drawImage(Img.windN, 0, 0, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, GRID_OFFSET + windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset);
-            break;
-
-        case 1:
-            ctx.drawImage(Img.windE, windOffset, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE);
-            ctx.drawImage(Img.windE, 0, 0, windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, windOffset, GRID_CELL_SIZE * GRID_SIZE);
-            break;
-
-        case 2:
             ctx.drawImage(Img.windS, 0, windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset);
             ctx.drawImage(Img.windS, 0, 0, GRID_CELL_SIZE * GRID_SIZE, windOffset, GRID_OFFSET, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, windOffset);
             break;
 
-        case 3:
+        case 1:
             ctx.drawImage(Img.windW, GRID_CELL_SIZE * GRID_SIZE - windOffset, 0, windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET, GRID_OFFSET, windOffset, GRID_CELL_SIZE * GRID_SIZE);
             ctx.drawImage(Img.windW, 0, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET + windOffset, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE);
+            break;
+
+        case 2:
+            ctx.drawImage(Img.windN, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, windOffset, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE, windOffset);
+            ctx.drawImage(Img.windN, 0, 0, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, GRID_OFFSET + windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_CELL_SIZE * GRID_SIZE - windOffset);
+            break;
+
+        case 3:
+            ctx.drawImage(Img.windE, windOffset, 0, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET, GRID_OFFSET, GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_CELL_SIZE * GRID_SIZE);
+            ctx.drawImage(Img.windE, 0, 0, windOffset, GRID_CELL_SIZE * GRID_SIZE, GRID_OFFSET + GRID_CELL_SIZE * GRID_SIZE - windOffset, GRID_OFFSET, windOffset, GRID_CELL_SIZE * GRID_SIZE);
             break;
     }
     // increment windOffset
