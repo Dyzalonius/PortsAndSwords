@@ -627,7 +627,7 @@ var Game = function (name) {
         for (var i in self.ships) {
             var ship = self.ships[i];
 
-            if (ship.directionPublic == self.windDirectionPublic) {
+            if (ship.directionPublic + self.windDirectionPublic % 2 == 0) {
                 ship.allowMove = false;
             }
         }
